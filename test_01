@@ -1,4 +1,8 @@
 ##### pass
 
-##### GO
+import output_objects_classes
+
+output_objects = output_objects_classes.Ouput_Object_List()
+
+
 
