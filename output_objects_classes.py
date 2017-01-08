@@ -1,9 +1,37 @@
+import tree_functions
+import shelve
+
 class Ouput_Object_List(object):
 
     def __init__(self):
         self.output_object_list = []
+        self.output_types_dictionary = {'Make_Folders': Output_Make_Folders, 'Copy_Tree': Output_Copy_Tree}
 
-    def add_new_object(self, new_output_object):
+    def create_new_output(self, output_type):
+        """makes new output no data just from type"""
+        new_index = self.get_next_index()
+        new_name = self.get_new_name(output_type)
+        new_output_object = self.output_types_dictionary[output_type](new_index, new_name)
+        self.add_new_object_to_object_list(new_output_object)
+
+    def create_new_output_apply_data(self, output_type, data):
+        """ makes a new output object from shelved data
+        data example - [0, 'Make_Folders-1', [['tree', '']]] ... [index, name, [variables, ..]]
+        """
+        new_index = self.get_next_index()
+        new_name = data[1]
+        new_variables = data[2]
+        new_output_object = self.output_types_dictionary[output_type](new_index, new_name)
+        new_output_object.set_process_name(new_name)
+        new_output_object.set_all_variables(new_variables)
+        self.add_new_object_to_object_list(new_output_object)
+
+    def temp_print_output_date(self):
+        print "current object data -"
+        for obj in self.output_object_list:
+            print str(obj.get_full_data())
+
+    def add_new_object_to_object_list(self, new_output_object):
         new_output_object.set_index(self.get_next_index())
         self.output_object_list.append(new_output_object)
 
@@ -11,12 +39,59 @@ class Ouput_Object_List(object):
         length = len(self.output_object_list)
         return length
 
+    def shelve_output_list_as_file(self, full_filename):
+        print "saving shelving output list - ", full_filename
+        output_object_data_list = []
+        for output_object in self.output_object_list:
+            data = output_object.get_full_data()
+            print "shelving data - ", data
+            output_object_data_list.append(data)
+        shelve_file = shelve.open(full_filename)
+        shelve_file['output_object_list'] = output_object_data_list
+        shelve_file.close()
+
+    def load_output_list_from_file(self, full_filename):
+        print "loading shelved output list - ", full_filename
+        self.output_object_list = []
+        shelve_file = shelve.open(full_filename)
+        output_object_data_list = shelve_file['output_object_list']
+        shelve_file.close()
+        for data in output_object_data_list:
+            type = self.get_output_type_from_name(data[1])
+            self.create_new_output_apply_data(type, data)
+
+
+    def get_output_type_from_name(self, name):
+        name_split = name.split('-')
+        return name_split[0]
+
+
+    def get_all_current_names(self):
+        current_names = []
+        for object in self.output_object_list:
+            current_names.append(object.get_process_name())
+        return current_names
+
+    def get_new_name(self, output_type):
+        current_names = self.get_all_current_names()
+        counter = 1
+        ok_new = False
+        while ok_new != True:
+            try_name = output_type + "-" + str(counter)
+            if try_name not in current_names:
+                new_name = try_name
+                ok_new = True
+            counter = counter + 1
+        return new_name
+
+
+
 class Output_Object(object):
 
-    def __init__(self):
-        self.index = 0
+    def __init__(self, index, name):
+        self.index = index
         self.variables = []
-        self.name = ""
+        self.name = name
 
     def set_index(self, index):
         self.index = index
@@ -29,6 +104,12 @@ class Output_Object(object):
 
     def get_process_name(self):
         return self.name
+
+    def set_all_variables(self, variables):
+        self.variables = variables
+
+    def get_all_variables(self):
+        return self.variables
 
     def set_variable(self, attribute, value):
         found = False
@@ -58,24 +139,45 @@ class Output_Object(object):
         self.name = name,
         self.variables = variables
 
+    def shelve_output_as_file(self, full_filename):
+        """makes static data file from output object"""
+        shelve_file = shelve.open(full_filename)
+        shelve_file['index'] = self.index
+        shelve_file['name'] = self.name
+        shelve_file['variables'] = self.variables
+        shelve_file.close()
+
+
 
 
 class Output_Make_Folders(Output_Object):
 
-    def __init__(self):
+    def __init__(self, index, name):
+        Output_Object.__init__(self, index, name)
         self.set_variable("tree", "")
-        self.set_variable("key", "")
+        self.set_variable("tree_variables", [])
+        self.set_variable("tree_paths", [])
 
+    # self.set_variable("tree_variables", tree_functions.get_variables_from_tree(tree))
+    # self.set_variable("tree_paths", tree_functions.get_paths_list_from_tree(tree))
 
 class Output_Copy_Tree(Output_Object):
 
-    def __init__(self):
+    def __init__(self, index, name):
+        Output_Object.__init__(self, index, name)
         self.set_variable("source_variable", "")
         self.set_variable("destination_variable", "")
 
 
 
-
+test_outputs_list = Ouput_Object_List()
+test_outputs_list.create_new_output("Make_Folders")
+test_outputs_list.create_new_output("Copy_Tree")
+testfile = tree_functions.ROOT_DIR + "/test_shelf"
+test_outputs_list.shelve_output_list_as_file(testfile)
+test_outputs_list.temp_print_output_date()
+test_outputs_list.load_output_list_from_file(testfile)
+test_outputs_list.temp_print_output_date()
 
 
 

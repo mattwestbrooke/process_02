@@ -23,6 +23,14 @@ def get_key_string_from_tree(key):
             key_string = str(line.rstrip())
     return key_string
 
+def get_variables_from_tree(tree):
+    variables = []
+    tree_variable_file = ROOT_DIR + '/trees/' + tree + '.varb'
+    with open(tree_variable_file, 'r') as f:
+        for line in f:
+            variables.append(str(line.rstrip()))
+    return variables
+
 def get_variables_list_from_key(key_string, split_char):
 
     """return just the variables from a key string"""
@@ -125,13 +133,13 @@ def apply_variables_to_tree_path(variable_tupples, tree_path):
 
 
 
-key_string = "[SHOW]_Sq[SEQUENCE]_Sc[SCENE]_[SHOT]"
-source_string = "AVE_SqCAB_Sc001_240"
-split_char = "_"
-result = get_key_break_list(key_string, split_char)
-
-print result
-
-result2 = get_variable_tupples_from_source_string(source_string, key_string, split_char)
-print result2
+# key_string = "[SHOW]_Sq[SEQUENCE]_Sc[SCENE]_[SHOT]"
+# source_string = "AVE_SqCAB_Sc001_240"
+# split_char = "_"
+# result = get_key_break_list(key_string, split_char)
+#
+# print result
+#
+# result2 = get_variable_tupples_from_source_string(source_string, key_string, split_char)
+# print result2
 
