@@ -1,7 +1,8 @@
 import tree_functions
 import shelve
+import os
 
-class Ouput_Object_List(object):
+class Output_Object_List(object):
 
     def __init__(self):
         self.output_object_list = []
@@ -26,7 +27,7 @@ class Ouput_Object_List(object):
         new_output_object.set_all_variables(new_variables)
         self.add_new_object_to_object_list(new_output_object)
 
-    def temp_print_output_date(self):
+    def temp_print_output_data(self):
         print "current object data -"
         for obj in self.output_object_list:
             print str(obj.get_full_data())
@@ -158,8 +159,11 @@ class Output_Make_Folders(Output_Object):
         self.set_variable("tree_variables", [])
         self.set_variable("tree_paths", [])
 
-    # self.set_variable("tree_variables", tree_functions.get_variables_from_tree(tree))
-    # self.set_variable("tree_paths", tree_functions.get_paths_list_from_tree(tree))
+    def set_tree_variables(self, tree):
+        self.set_variable("tree_variables", tree_functions.get_variables_from_tree(tree))
+
+    def set_path_variables(self, tree):
+        self.set_variable("tree_paths", tree_functions.get_paths_list_from_tree(tree))
 
 class Output_Copy_Tree(Output_Object):
 
@@ -170,14 +174,14 @@ class Output_Copy_Tree(Output_Object):
 
 
 
-test_outputs_list = Ouput_Object_List()
+test_outputs_list = Output_Object_List()
 test_outputs_list.create_new_output("Make_Folders")
 test_outputs_list.create_new_output("Copy_Tree")
 testfile = tree_functions.ROOT_DIR + "/test_shelf"
 test_outputs_list.shelve_output_list_as_file(testfile)
-test_outputs_list.temp_print_output_date()
+test_outputs_list.temp_print_output_data()
 test_outputs_list.load_output_list_from_file(testfile)
-test_outputs_list.temp_print_output_date()
+test_outputs_list.temp_print_output_data()
 
 
 

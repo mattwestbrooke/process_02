@@ -1,0 +1,7 @@
+[root]
+[root]/[EPISODE]
+[root]/[EPISODE]/[SCENE]
+[root]/[EPISODE]/[SCENE]/[SHOT]
+[root]/[EPISODE]/[SCENE]/[SHOT]/master
+[root]/[EPISODE]/[SCENE]/[SHOT]/scripts
+[root]/[EPISODE]/[SCENE]/[SHOT]/plate
