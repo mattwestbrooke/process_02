@@ -174,14 +174,14 @@ class Output_Copy_Tree(Output_Object):
 
 
 
-test_outputs_list = Output_Object_List()
-test_outputs_list.create_new_output("Make_Folders")
-test_outputs_list.create_new_output("Copy_Tree")
-testfile = tree_functions.ROOT_DIR + "/test_shelf"
-test_outputs_list.shelve_output_list_as_file(testfile)
-test_outputs_list.temp_print_output_data()
-test_outputs_list.load_output_list_from_file(testfile)
-test_outputs_list.temp_print_output_data()
+# test_outputs_list = Output_Object_List()
+# test_outputs_list.create_new_output("Make_Folders")
+# test_outputs_list.create_new_output("Copy_Tree")
+# testfile = tree_functions.ROOT_DIR + "/test_shelf"
+# test_outputs_list.shelve_output_list_as_file(testfile)
+# test_outputs_list.temp_print_output_data()
+# test_outputs_list.load_output_list_from_file(testfile)
+# test_outputs_list.temp_print_output_data()
 
 
 
