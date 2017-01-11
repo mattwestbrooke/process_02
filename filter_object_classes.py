@@ -78,7 +78,7 @@ class Filter_Object_List(object):
     def get_all_current_filter_names(self):
         current_filter_names = []
         for filter in self.filter_object_list:
-            current_filter_names.append(object.get_filter_name())
+            current_filter_names.append(filter.get_filter_name())
         return current_filter_names
 
     def get_new_filter_name(self, filter_type):
@@ -93,11 +93,40 @@ class Filter_Object_List(object):
             counter = counter + 1
         return new_name
 
+    def find_filter_from_name(self, filter_name):
+        found_filter = False
+        for filter in self.filter_object_list:
+            if filter.get_filter_name() == filter_name:
+                found_filter = filter
+        return found_filter
+
+
+    def set_filter_variable_from_variable_name(self, variable, value, filter_name):
+        filter = self.find_filter_from_name(filter_name)
+        if filter != False:
+            filter.set_variable(variable, value)
+
+
+    def get_variable_names_from_variable_tupples(self, variable_tupples):
+        names = []
+        for tupple in variable_tupples:
+            names.append(tupple[0])
+        return names
+
+    def get_variables_from_current_data_object_list(self, data_object_list):
+        avaliable_variables = []
+        for data_object in data_object_list:
+            variable_tupples = data_object.get_variable_tupples()
+            names = self.get_variable_names_from_variable_tupples(variable_tupples)
+            for name in names:
+                if name not in avaliable_variables:
+                    avaliable_variables.append(name)
+        return avaliable_variables
+
     def apply_filters(self, data_object_list):
         for filter in self.filter_object_list:
-            filter.apply_filter(data_object_list)
-
-
+            avaliable_variables = self.get_variables_from_current_data_object_list(data_object_list)
+            filter.apply_filter(data_object_list, avaliable_variables)
 
 
 class Filter_Object(object):
@@ -105,8 +134,9 @@ class Filter_Object(object):
     def __init__(self, index, name):
         self.index = index
         self.name = name
+        self.activate = True
         self.avaliable_variables = []
-        self.variables = []
+        self.filter_variables = []
 
 
     def set_index(self, index):
@@ -126,10 +156,10 @@ class Filter_Object(object):
         return name_split[0]
 
     def set_all_variables(self, variables):
-        self.variables = variables
+        self.filter_variables = variables
 
     def get_all_variables(self):
-        return self.variables
+        return self.filter_variables
 
     def set_all_avaliable_variables(self, avaliable_variables):
         self.avaliable_variables = avaliable_variables
@@ -139,42 +169,57 @@ class Filter_Object(object):
 
     def set_variable(self, attribute, value):
         found = False
-        for ii in self.variables:
-            if ii[0] == attribute:
-                ii[1] = value
+        for filter_variable_tupple in self.filter_variables:
+            if filter_variable_tupple[0] == attribute:
+                filter_variable_tupple[1] = value
                 found = True
 
         if found == False:
-            self.variables.append([attribute, value])
+            self.filter_variables.append([attribute, value])
         return found
 
     def get_variable(self, attribute):
         found = False
         result = ""
-        for jj in self.variables:
-            if jj[0] == attribute:
-                result = jj[1]
+        for filter_variable_tupple in self.filter_variables:
+            if filter_variable_tupple[0] == attribute:
+                result = filter_variable_tupple[1]
                 found = True
         return result, found
 
 
     def get_full_data(self):
-        return [self.index, self.name, self.variables, self.avaliable_variables]
+        return [self.index, self.name, self.activate, self.filter_variables, self.avaliable_variables]
 
-    def set_full_data(self, index, name, variables, avaliable_variables):
+    def set_full_data(self, index, name, activate, filter_variables, avaliable_variables):
         self.index = index
         self.name = name
-        self.variables = variables
+        self.activate = activate
+        self.filter_variables = filter_variables
         self.avaliable_variables = avaliable_variables
 
+    def get_valid_new_variable_name(self, new_name):
+        if new_name in self.avaliable_variables:
+            ok_new = False
+            counter = 2
+            while ok_new != True:
+                try_name = new_name + "-" + str(counter)
+                if try_name not in self.current_filter_variables:
+                    new_confirmed_name = try_name
+                    ok_new = True
+                counter = counter + 1
+        else:
+            new_confirmed_name = new_name
+        return new_confirmed_name
 
 
 class Key_Filter(Filter_Object):
 
     def __init__(self, index, name):
         Filter_Object.__init__(self, index, name)
-        self.set_variable("key_filter", "")
-        self.set_variable("active_variable", "")
+        self.set_variable("key_filter", "not_set")
+        self.set_variable("active_variable", "not_set")
+        self.set_variable("split_char", "_")
 
     def set_key_filter(self, key_filter):
         self.set_variable("key_filter", key_filter)
@@ -182,17 +227,122 @@ class Key_Filter(Filter_Object):
     def set_active_variable(self, variable):
         self.set_variable("active_variable", variable)
 
-    def apply_filter(self, data_object_list):
-        for data_object in data_object_list:
-            data_object.set_variable("bogus", "ten")
-        #return data_object_list
+    def set_split_char(self, split_char):
+        self.set_variable("split_char", split_char)
+
+    def activate_qualifier(self, key_filter, found_key_filter, active_variable, found_active_variable):
+        activate = True
+
+        current_keys = tree_functions.get_all_current_keys()
+
+        if key_filter not in current_keys:
+            activate = False
+        elif found_key_filter == "not_set":
+            activate = False
+        elif active_variable not in self.avaliable_variables:
+            activate = False
+        elif found_active_variable == "not_set":
+            activate = False
+        return activate
+
+    def apply_filter(self, data_object_list, avaliable_variables):
+
+        key_filter, found_key_filter = self.get_variable("key_filter")
+        active_variable, found_active_variable = self.get_variable("active_variable")
+
+        self.set_all_avaliable_variables(avaliable_variables)
+        if self.activate_qualifier(key_filter, found_key_filter, active_variable, found_active_variable) == True:
+            self.activate = True
+            print "activated Key_filter!!!"
+            for data_object in data_object_list:
+                active_variable_value, active_variable_isfound = data_object.get_variable(str(active_variable))
+                key_string_value = tree_functions.get_key_string_from_key_file(key_filter)
+                if active_variable_isfound == True:
+                    variable_tuples, match_passed = tree_functions.get_variable_tupples_from_source_string(active_variable_value, key_string_value, "_")
+                    print "var tupples -", variable_tuples
+                    for variable_tupple in variable_tuples:
+                        data_object.set_variable(variable_tupple[0], variable_tupple[1])
+                        data_object.set_variable('[MATCHED]', str(match_passed))
+        else:
+            self.activate = False
+
 
 class Combine_Filter(Filter_Object):
 
     def __init__(self, index, name):
         Filter_Object.__init__(self, index, name)
-        self.set_variable("key_filter", "")
-        self.set_variable("active_variable", "")
+        self.set_variable("text_1", "")
+        self.set_variable("variable_1", "not_set")
+        self.set_variable("text_2", "")
+        self.set_variable("variable_2", "not_set")
+        self.set_variable("text_3", "")
+        self.set_variable("variable_3", "not_set")
+        self.set_variable("result_variable", "not_set")
+
+    def set_all_filter_variables(self, text_1, variable_1, text_2, variable_2, text_3, variable_3, result_variable):
+        self.set_variable("text_1", text_1)
+        self.set_variable("variable_1", variable_1)
+        self.set_variable("text_2", text_2)
+        self.set_variable("variable_2", variable_2)
+        self.set_variable("text_3", text_3)
+        self.set_variable("variable_3", variable_3)
+        self.set_variable("result_variable", result_variable)
+
+    def activate_qualifier(self, variable_1, variable_2, variable_3):
+        activate = True
+        if variable_1 not in self.avaliable_variables and variable_1 != "not_set":
+            activate = False
+        if variable_2 not in self.avaliable_variables and variable_2 != "not_set":
+            activate = False
+        if variable_3 not in self.avaliable_variables and variable_3 != "not_set":
+            activate = False
+        return activate
+
+    def apply_filter(self, data_object_list, avaliable_variables):
+
+        text_1, text_1_found = self.get_variable("text_1")
+        variable_1, variable_1_found = self.get_variable("variable_1")
+        text_2, text_2_found = self.get_variable("text_2")
+        variable_2, variable_2_found = self.get_variable("variable_2")
+        text_3, text_3_found = self.get_variable("text_3")
+        variable_3, variable_3_found = self.get_variable("variable_3")
+        result_variable, result_variable_found = self.get_variable("result_variable")
+
+        self.set_all_avaliable_variables(avaliable_variables)
+        if self.activate_qualifier(variable_1, variable_2, variable_3) == True:
+            self.activate = True
+            result_variable = self.get_valid_new_variable_name(result_variable)
+            for data_object in data_object_list:
+                output_value = ""
+                if text_1 != 'not_set':
+                    output_value += text_1
+                if variable_1 != 'not_set':
+                    v1_val, v1_f = data_object.get_variable(variable_1)
+                    if v1_f == True:
+                        output_value += v1_val
+                if text_2 != 'not_set':
+                    output_value += text_2
+                if variable_2 != 'not_set':
+                    v2_val, v2_f = data_object.get_variable(variable_2)
+                    if v2_f == True:
+                        output_value += v2_val
+                if text_3 != 'not_set':
+                    output_value += text_3
+                if variable_3 != 'not_set':
+                    v3_val, v3_f = data_object.get_variable(variable_3)
+                    if v3_f == True:
+                        output_value += v3_val
+                data_object.set_variable(result_variable, output_value)
+        else:
+            self.activate = False
+
+
+
+
+
+
+
+
 
 
 

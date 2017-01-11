@@ -1,6 +1,27 @@
-import os, sys
+import os
+import sys
 
 ROOT_DIR = os.path.dirname(sys.modules['__main__'].__file__)
+
+def get_all_current_trees():
+    trees = []
+    trees_path = ROOT_DIR + '/trees'
+    for file in os.listdir(trees_path):
+        if file.endswith(".tree"):
+            file_split = file.split('.')
+            trees.append(file_split[0])
+
+    return trees
+
+def get_all_current_keys():
+    keys = []
+    keys_path = ROOT_DIR + '/keys'
+    for file in os.listdir(keys_path):
+        if file.endswith(".key"):
+            file_split = file.split('.')
+            keys.append(file_split[0])
+
+    return keys
 
 def get_paths_list_from_tree(tree):
     paths =[]
@@ -17,7 +38,7 @@ def get_root_path_from_tree(tree):
             tree_root = str(line.rstrip())
     return tree_root
 
-def get_key_string_from_tree(key):
+def get_key_string_from_key_file(key):
     with open((ROOT_DIR + '/keys/' + key + '.key'), 'r') as f:
         for line in f:
             key_string = str(line.rstrip())

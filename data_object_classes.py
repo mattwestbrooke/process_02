@@ -10,6 +10,8 @@ class Data_Object_List(object):
         self.data_object_list = []
         self.filter_object_list = filter_object_classes.Filter_Object_List()
 
+    def get_data_objects(self):
+        return self.data_object_list
 
     def create_new_data_object(self):
         """makes new data object with now variables assigned"""
@@ -104,32 +106,49 @@ class Data_Object(object):
     def get_full_data(self):
         return [self.id, self.variables]
 
+    def get_variable_tupples(self):
+        return self.variables
 
 
 
-test_data_object_list = Data_Object_List()
-test_data_object_list.create_new_data_object_and_set_variables(0, [["source_media", "alpha"],["shot", "010"],["scene", "022"]])
-test_data_object_list.create_new_data_object_and_set_variables(1, [["source_media", "beta"],["shot", "020"],["scene", "022"]])
-test_data_object_list.create_new_data_object_and_set_variables(2, [["source_media", "gama"],["shot", "030"],["scene", "022"]])
-test_data_object_list.create_new_data_object_and_set_variables(3, [["source_media", "delta"],["shot", "040"],["scene", "022"]])
-test_data_object_list.create_new_data_object()
-test_data_object_list.temp_print_data_objects()
 
-testfile = tree_functions.ROOT_DIR + "/test_data"
-test_data_object_list.shelve_data_object_list_as_file(testfile)
-print "cleared"
-test_data_object_list.clear_data()
+# test_data_object_list = Data_Object_List()
+# test_data_object_list.create_new_data_object_and_set_variables(0, [["source_media", "AVE_101_SC020_SH005"],["shotX", "010"],["sceneX", "022"]])
+# test_data_object_list.create_new_data_object_and_set_variables(1, [["source_media", "AVE_102_SC010_SH006"],["shotX", "020"],["sceneX", "022"]])
+# test_data_object_list.create_new_data_object_and_set_variables(2, [["source_media", "AVE_103_SC070_SH007"],["shotX", "030"],["sceneX", "022"]])
+# test_data_object_list.create_new_data_object_and_set_variables(3, [["source_media", "AVE_104_SC060_SH008"],["shotX", "040"],["sceneX", "022"]])
+# test_data_object_list.temp_print_data_objects()
+#
+# testfile = tree_functions.ROOT_DIR + "/test_data"
+# test_data_object_list.shelve_data_object_list_as_file(testfile)
+# print "cleared"
+# test_data_object_list.clear_data()
+#
+# test_data_object_list.temp_print_data_objects()
+# test_data_object_list.load_data_list_from_file(testfile)
+# print "loaded -- "
+# test_data_object_list.temp_print_data_objects()
+#
+# test_data_object_list.filter_object_list.create_new_filter("Key_Filter")
+# print "our filters ... "
+# test_data_object_list.filter_object_list.temp_print_filter_data()
+# test_data_object_list.filter_object_list.set_filter_variable_from_variable_name("key_filter", "MVFX_shot_key", "Key_Filter-1")
+# test_data_object_list.filter_object_list.set_filter_variable_from_variable_name("active_variable", "source_media", "Key_Filter-1")
+#
+# test_data_object_list.filter_object_list.create_new_filter("Combine_Filter")
+# test_data_object_list.filter_object_list.set_filter_variable_from_variable_name("variable_1", "[PROJECT]", "Combine_Filter-1")
+# test_data_object_list.filter_object_list.set_filter_variable_from_variable_name("text_2", "___", "Combine_Filter-1")
+# test_data_object_list.filter_object_list.set_filter_variable_from_variable_name("variable_2", "[SCENE]", "Combine_Filter-1")
+# test_data_object_list.filter_object_list.set_filter_variable_from_variable_name("result_variable", "[COMBINED]", "Combine_Filter-1")
+#
+#
+#
+# test_data_object_list.filter_object_list.temp_print_filter_data()
+# test_data_object_list.filter_object_list.apply_filters(test_data_object_list.data_object_list)
+#
+# test_data_object_list.temp_print_data_objects()
 
-test_data_object_list.temp_print_data_objects()
-test_data_object_list.load_data_list_from_file(testfile)
-print "loaded -- "
-test_data_object_list.temp_print_data_objects()
 
-test_data_object_list.filter_object_list.create_new_filter("Key_Filter")
-test_data_object_list.filter_object_list.temp_print_filter_data()
-test_data_object_list.filter_object_list.apply_filters(test_data_object_list.data_object_list)
-
-test_data_object_list.temp_print_data_objects()
 
 
 

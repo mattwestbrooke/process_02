@@ -4,7 +4,8 @@ import os
 
 class Output_Object_List(object):
 
-    def __init__(self):
+    def __init__(self, data_object_list):
+        self.data_objects = data_object_list.get_data_objects()
         self.output_object_list = []
         self.output_types_dictionary = {'Make_Folders': Output_Make_Folders, 'Copy_Tree': Output_Copy_Tree}
 
@@ -61,7 +62,6 @@ class Output_Object_List(object):
             type = self.get_output_type_from_name(data[1])
             self.create_new_output_apply_data(type, data)
 
-
     def get_output_type_from_name(self, name):
         name_split = name.split('-')
         return name_split[0]
@@ -85,6 +85,32 @@ class Output_Object_List(object):
             counter = counter + 1
         return new_name
 
+    def find_output_from_name(self, output_name):
+        found_output = False
+        for output in self.output_object_list:
+            if output.get_output_name() == output_name:
+                found_output = filter
+        return found_output
+
+    def set_output_variable_from_output_name(self, variable, value, output_name):
+        output = self.find_output_from_name(output_name)
+        if output != False:
+            output.set_variable(variable, value)
+
+    # def get_tupple_from_data_object_list(self, variable1, variable2):
+    #     tupples = []
+    #     for data_object in self.data_objects:
+    #         variable1_value, varible1_found = data_object.get_variable(variable1)
+    #         variable2_value, varible2_found = data_object.get_variable(variable2)
+    #         tupple = [variable1_value, variable2_value]
+    #         tupples.append(tupple)
+    #     print tupples
+    #     return tupples
+
+    def process_outputs(self):
+        for output in self.output_object_list:
+            output.process_output(self.data_objects)
+
 
 
 class Output_Object(object):
@@ -93,6 +119,8 @@ class Output_Object(object):
         self.index = index
         self.variables = []
         self.name = name
+
+
 
     def set_index(self, index):
         self.index = index
@@ -114,9 +142,9 @@ class Output_Object(object):
 
     def set_variable(self, attribute, value):
         found = False
-        for ii in self.variables:
-            if ii[0] == attribute:
-                ii[1] = value
+        for variable in self.variables:
+            if variable[0] == attribute:
+                variable[1] = value
                 found = True
 
         if found == False:
@@ -126,9 +154,9 @@ class Output_Object(object):
     def get_variable(self, attribute):
         found = False
         result = ""
-        for jj in self.variables:
-            if jj[0] == attribute:
-                result = jj[1]
+        for variable in self.variables:
+            if variable[0] == attribute:
+                result = variable[1]
                 found = True
         return result, found
 
@@ -148,6 +176,13 @@ class Output_Object(object):
         shelve_file['variables'] = self.variables
         shelve_file.close()
 
+    def gv(self, variable_name):
+        value, found = self.get_variable(variable_name)
+        return value
+
+
+
+
 
 
 
@@ -164,6 +199,15 @@ class Output_Make_Folders(Output_Object):
 
     def set_path_variables(self, tree):
         self.set_variable("tree_paths", tree_functions.get_paths_list_from_tree(tree))
+
+    def check_avtivate(self):
+        activate = True
+        return activate
+
+    def process_output(self, data_objects):
+        print "tree_variables --- ", self.gv("tree_variables")
+        print "tree_paths --- ", self.gv("tree_paths")
+
 
 class Output_Copy_Tree(Output_Object):
 
