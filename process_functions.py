@@ -13,6 +13,8 @@ def get_root_path():
 
 ROOT_DIR = get_root_path()
 
+def get_process_path_from_name(process_name):
+    return ROOT_DIR + '/process' + process_name + '.prcs'
 
 def get_all_processes():
     processes = []
@@ -65,8 +67,6 @@ def get_next_process_event(process_structure):
                 break
         if new_event != False:
             break
-        else:
-            set_process_global_status_done(process_name, process_structure)
 
 
 

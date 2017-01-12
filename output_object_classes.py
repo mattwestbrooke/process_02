@@ -3,7 +3,6 @@ import process_functions
 import shelve
 import os
 from time import gmtime, strftime
-import threading
 
 
 class Output_Object_List(object):
