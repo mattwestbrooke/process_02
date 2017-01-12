@@ -2,28 +2,48 @@
 
 import output_object_classes
 
-#output_objects = output_objects_classes.Ouput_Object_List()
-
 import os
 import sys
 
 ROOT_DIR = os.path.dirname(sys.modules['__main__'].__file__)
 
-def get_all_current_trees():
-    trees = []
-    trees_path = ROOT_DIR + '/trees'
-    for file in os.listdir(trees_path):
-        if file.endswith(".tree"):
-            file_split = file.split('.')
-            trees.append(file_split[0])
+import threading
+import time
 
-    return trees
+def really_simple_callback(message):
+    """
+    This is a really simple callback. `sys.stdout` already has a lock built-in,
+    so this is fine to do.
+    """
+    print message
+
+def threaded_target(sleeptime, callback):
+    """
+    Target for the threads: sleep and call back with completion message.
+    """
+    time.sleep(sleeptime)
+    callback("%s completed!" % threading.current_thread())
+
+if __name__ == '__main__':
+    # Keep track of the threads we create
+    threads = []
+
+    # callback_when_done is effectively a function
+    callback_when_done = really_simple_callback
+
+    for idx in xrange(0, 10):
+        threads.append(
+            threading.Thread(
+                target=threaded_target,
+                name="Thread #%d" % idx,
+                args=(10 - idx, callback_when_done)
+            )
+        )
+
+    [t.start() for t in threads]
+    #[t.join() for t in threads]
 
 
-
-trees = get_all_current_trees()
-for i in trees:
-    print i
 
 
 

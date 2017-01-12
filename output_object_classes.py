@@ -1,11 +1,16 @@
 import tree_functions
+import process_functions
 import shelve
 import os
+from time import gmtime, strftime
+import threading
+
 
 class Output_Object_List(object):
 
     def __init__(self, data_object_list):
         self.data_objects = data_object_list.get_data_objects()
+        self.data_object_list = data_object_list
         self.output_object_list = []
         self.output_types_dictionary = {'Make_Folders': Output_Make_Folders, 'Copy_Tree': Output_Copy_Tree}
 
@@ -24,7 +29,7 @@ class Output_Object_List(object):
         new_name = data[1]
         new_variables = data[2]
         new_output_object = self.output_types_dictionary[output_type](new_index, new_name)
-        new_output_object.set_process_name(new_name)
+        new_output_object.set_output_name(new_name)
         new_output_object.set_all_variables(new_variables)
         self.add_new_object_to_object_list(new_output_object)
 
@@ -89,7 +94,7 @@ class Output_Object_List(object):
         found_output = False
         for output in self.output_object_list:
             if output.get_output_name() == output_name:
-                found_output = filter
+                found_output = output
         return found_output
 
     def set_output_variable_from_output_name(self, variable, value, output_name):
@@ -97,19 +102,15 @@ class Output_Object_List(object):
         if output != False:
             output.set_variable(variable, value)
 
-    # def get_tupple_from_data_object_list(self, variable1, variable2):
-    #     tupples = []
-    #     for data_object in self.data_objects:
-    #         variable1_value, varible1_found = data_object.get_variable(variable1)
-    #         variable2_value, varible2_found = data_object.get_variable(variable2)
-    #         tupple = [variable1_value, variable2_value]
-    #         tupples.append(tupple)
-    #     print tupples
-    #     return tupples
-
-    def process_outputs(self):
+    def setup_processes_to_file(self, process_name):
+        new_processes_name = process_functions.get_new_processes_name(process_name)
+        new_processes_file_path = process_functions.new_processes_file(new_processes_name)
+        processes_structure = []
         for output in self.output_object_list:
-            output.process_output(self.data_objects)
+            process_events = output.setup_process_events(self.data_object_list)
+            processes_structure.append(process_events)
+        process_functions.set_processes_to_file(new_processes_file_path, processes_structure)
+
 
 
 
@@ -128,10 +129,10 @@ class Output_Object(object):
     def get_index(self):
         return self.index
 
-    def set_process_name(self, name):
+    def set_output_name(self, name):
         self.name = name
 
-    def get_process_name(self):
+    def get_output_name(self):
         return self.name
 
     def set_all_variables(self, variables):
@@ -180,10 +181,23 @@ class Output_Object(object):
         value, found = self.get_variable(variable_name)
         return value
 
+    def get_values_for_tree_variables(self, data_object, tree_variables):
+        tupples = []
+        found_all = True
+        for variable in tree_variables:
+            value, found = data_object.get_variable(variable)
+            tupples.append([str(variable), value])
+            if found == False:
+                found_all = False
+        return tupples, found_all
 
-
-
-
+    def add_basic_notes(self, notes, status, source_text, matched, index):
+        notes.append("source text = " + str(source_text))
+        notes.append("index = " + str(index))
+        if matched == "False":
+            notes.append("Failed to match event in list build")
+            status = "Pass"
+        return notes, status
 
 
 class Output_Make_Folders(Output_Object):
@@ -195,18 +209,67 @@ class Output_Make_Folders(Output_Object):
         self.set_variable("tree_paths", [])
 
     def set_tree_variables(self, tree):
-        self.set_variable("tree_variables", tree_functions.get_variables_from_tree(tree))
+        tree_variables = tree_functions.get_variables_from_tree(tree)
+        self.set_variable("tree_variables", tree_variables)
+        return tree_variables
 
     def set_path_variables(self, tree):
-        self.set_variable("tree_paths", tree_functions.get_paths_list_from_tree(tree))
+        path_variables = tree_functions.get_paths_list_from_tree(tree)
+        self.set_variable("tree_paths", path_variables)
+        return path_variables
 
-    def check_avtivate(self):
+    def check_activate(self, tree, tree_root):
         activate = True
+        if os.path.exists(tree_root) == False:
+            avtivate = False
+        if tree_functions.tree_exists(tree) == False:
+            avtivate = False
         return activate
 
-    def process_output(self, data_objects):
-        print "tree_variables --- ", self.gv("tree_variables")
-        print "tree_paths --- ", self.gv("tree_paths")
+    def add_specific_notes(self, notes, status, found_all):
+        if found_all == False:
+            notes.append("Not all tree variavbles were created in list build")
+            status = "Pass"
+        return notes, status
+
+    def setup_process_events(self, data_object_list):
+        """ creates a list that has all the data to process this output [name, type, time_added, global_status, [[index, status, notes, v1, v2..], [index, status, notes, v1, v2, ...]]"""
+        process_name = self.get_output_name()
+        process_type = "Make_Folders"
+        tree = self.gv("tree")
+        tree_root = tree_functions.get_root_path_from_tree(tree)
+        time_string = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+        global_status = "Ready"
+        events = []
+
+        if self.check_activate(tree, tree_root) == True:
+            tree_variables = self.set_tree_variables(tree)
+            tree_paths = self.set_path_variables(tree)
+
+            for data_object in data_object_list.get_data_objects():
+                tupples, found_all = self.get_values_for_tree_variables(data_object, tree_variables)
+                source_text, found_source_text = data_object.get_variable('[SOURCE_TEXT]')
+                matched, found_matched = data_object.get_variable('[MATCHED]')
+                index = data_object.get_index()
+
+                for tree_path in tree_paths:
+                    notes = []
+                    status = "Ready"
+                    notes, status = self.add_basic_notes(notes, status, source_text, matched, index)
+                    notes, status = self.add_specific_notes(notes, status, found_all)
+
+                    tree_path = tree_functions.apply_root_path_to_tree_path(tree, tree_path)
+                    new_path = tree_functions.apply_variables_to_tree_path(tupples, tree_path)
+                    print ""
+                    print tree_path
+                    print notes
+                    events.append([index, status, notes, new_path])
+            else:
+                global_status = "Pass"
+
+        process_events = [process_name, process_type, time_string, global_status, events]
+        return process_events
+
 
 
 class Output_Copy_Tree(Output_Object):

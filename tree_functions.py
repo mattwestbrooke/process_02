@@ -1,7 +1,16 @@
 import os
 import sys
 
-ROOT_DIR = os.path.dirname(sys.modules['__main__'].__file__)
+def get_root_path():
+    ROOT = os.path.dirname(sys.modules['__main__'].__file__)
+    with open((ROOT + '/setups_path'), 'r') as f:
+        for line in f:
+            ROOT_DIR = str(line.rstrip())
+    if ROOT_DIR == "ROOT":
+        ROOT_DIR = ROOT
+    return ROOT_DIR
+
+ROOT_DIR = get_root_path()
 
 def get_all_current_trees():
     trees = []
@@ -22,6 +31,14 @@ def get_all_current_keys():
             keys.append(file_split[0])
 
     return keys
+
+def tree_exists(tree):
+    current_trees = get_all_current_trees()
+    if tree in current_trees:
+        found = True
+    else:
+        found = False
+    return found
 
 def get_paths_list_from_tree(tree):
     paths =[]

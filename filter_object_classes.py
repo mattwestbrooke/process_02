@@ -4,6 +4,8 @@ import datetime
 import shelve
 import tree_functions
 
+
+# This can be removed...
 ROOT_DIR = os.path.dirname(sys.modules['__main__'].__file__)
 
 
@@ -30,7 +32,7 @@ class Filter_Object_List(object):
         new_variables = data[2]
         new_available_variables = data[3]
         new_filter_object = self.filter_types_dictionary[filter_type](new_filter_index, new_filter_name)
-        new_filter_object.set_process_name(new_filter_name)
+        new_filter_object.set_output_name(new_filter_name)
         new_filter_object.set_all_variables(new_variables)
         new_filter_object.set_all_avaiable_variables(new_available_variables)
         self.add_new_filter_to_filter_list(new_filter_object)
