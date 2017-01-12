@@ -55,18 +55,7 @@ def get_processes_from_file(processes_file_path):
     shelve_file.close()
     return process_structure
 
-def get_next_process_event(process_structure):
-    new_event = False
-    for process in process_structure:
-        process_name = process[0]
-        process_type = process[1]
-        event_list = process[3]
-        for event in event_list:
-            if event[1] == "Ready":
-                new_event = [process_name, process_type, event[0]]
-                break
-        if new_event != False:
-            break
+
 
 
 
