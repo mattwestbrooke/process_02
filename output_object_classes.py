@@ -102,13 +102,13 @@ class Output_Object_List(object):
             output.set_variable(variable, value)
 
     def setup_processes_to_file(self, process_name):
-        new_processes_name = process_functions.get_new_processes_name(process_name)
-        new_processes_file_path = process_functions.new_processes_file(new_processes_name)
-        processes_structure = []
+        new_process_name = process_functions.get_new_process_name(process_name)
+        new_process_file_path = process_functions.new_process_file(new_process_name)
+        process = []
         for output in self.output_object_list:
-            process_events = output.setup_process_events(self.data_object_list)
-            processes_structure.append(process_events)
-        process_functions.set_processes_to_file(new_processes_file_path, processes_structure)
+            process_output = output.setup_process_output(self.data_object_list)
+            process.append(process_output)
+        process_functions.set_process_to_file(new_process_file_path, process)
 
 
 
@@ -119,8 +119,6 @@ class Output_Object(object):
         self.index = index
         self.variables = []
         self.name = name
-
-
 
     def set_index(self, index):
         self.index = index
@@ -231,10 +229,10 @@ class Output_Make_Folders(Output_Object):
             status = "Pass"
         return notes, status
 
-    def setup_process_events(self, data_object_list):
-        """ creates a list that has all the data to process this output [name, type, time_added, global_status, [[index, status, notes, v1, v2..], [index, status, notes, v1, v2, ...]]"""
-        process_name = self.get_output_name()
-        process_type = "Make_Folders"
+    def setup_process_output(self, data_object_list):
+        """ creates a list, process task that has all the data to process this output [name, type, time_added, global_status, [[index, status, notes, v1, v2..], [index, status, notes, v1, v2, ...]]"""
+        process_output_name = self.get_output_name()
+        process_output_type = "Make_Folders"
         tree = self.gv("tree")
         tree_root = tree_functions.get_root_path_from_tree(tree)
         time_string = strftime("%Y-%m-%d %H:%M:%S", gmtime())
@@ -259,15 +257,12 @@ class Output_Make_Folders(Output_Object):
 
                     tree_path = tree_functions.apply_root_path_to_tree_path(tree, tree_path)
                     new_path = tree_functions.apply_variables_to_tree_path(tupples, tree_path)
-                    print ""
-                    print tree_path
-                    print notes
                     events.append([index, status, notes, new_path])
             else:
                 global_status = "Pass"
 
-        process_events = [process_name, process_type, time_string, global_status, events]
-        return process_events
+        process_output = [process_output_name, process_output_type, time_string, global_status, events]
+        return process_output
 
 
 
