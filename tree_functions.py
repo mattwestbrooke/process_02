@@ -1,16 +1,9 @@
 import os
 import sys
+import defaults
 
-def get_root_path():
-    ROOT = os.path.dirname(sys.modules['__main__'].__file__)
-    with open((ROOT + '/setups_path'), 'r') as f:
-        for line in f:
-            ROOT_DIR = str(line.rstrip())
-    if ROOT_DIR == "ROOT":
-        ROOT_DIR = ROOT
-    return ROOT_DIR
 
-ROOT_DIR = get_root_path()
+ROOT_DIR = defaults.get_root_path()
 
 def get_all_current_trees():
     trees = []

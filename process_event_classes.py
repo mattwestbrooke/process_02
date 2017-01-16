@@ -1,8 +1,10 @@
 import os
-import sys
+import shutil
 import process_functions
+import defaults
 
-ROOT_DIR = process_functions.get_root_path()
+ROOT_DIR = defaults.get_root_path()
+UI_STATUS = defaults.get_ui_status()
 
 
 class Process_list(object):
@@ -16,7 +18,7 @@ class Process_list(object):
         process_file_path_list = self.get_process_file_list()
         for file in process_file_path_list:
             process_data = process_functions.get_process_data_from_file(file[0])
-            new_process_object = Process_Object(process_data, file[1])
+            new_process_object = Process(process_data, file[1])
             self.process_list.append(new_process_object)
 
     def get_process_file_list(self):
@@ -30,34 +32,10 @@ class Process_list(object):
         for pp in self.process_list:
             pp.print_data()
 
-    def find_next_event_to_process(self):
-        process_index = False
-        process_object_name = False
-        event_index = False
-        counter = 0
-        found = False
-        result = False
-        while found == False:
-            for process_object in self.process_list:
-                process_index = counter
-                process_object_list = process_object.process_objects()
-                for process_output_object in process_object_list:
-                    process_object_name = process_output_object.get_name()
-                    event_list = process_output_object.events()
-                    for event in event_list:
-                        event_index = event.get_index()
-                        event_status = event.get_status()
-                        if event_status == 'Ready' and found == False:
-                            result = [process_index, process_object_name, event_index]
-                            found = True
-                counter = counter +1
-        return result
-
     def get_event(self, process_index, process_object_name, event_index):
         process = self.process_list[process_index]
         process_output = process.get_process_output(process_object_name)
         event = process_output.get_event(event_index)
-        #print "tester -- ", event.get_new_path()
         return event
 
     def get_event_by_tupple(self, tupple):
@@ -71,23 +49,38 @@ class Process_list(object):
         for process in self.process_list:
             process_data = process.get_process_data()
             process_name = process.get_process_name()
-            print 'test name - ', process_name
             process_file_path = process_functions.get_process_path_from_name(process_name)
-            print 'test_save - ', process_data
             process_functions.set_process_data_to_file(process_file_path, process_data)
 
+    def get_all_processes(self):
+        return self.process_list
+
+    def process_events(self):
+        if UI_STATUS == "no":
+
+            processes = self.get_all_processes()
+            for process in  processes:
+                process_output_objects = process.get_all_process_output_objects()
+                for process_output_object in process_output_objects:
+                    if process_output_object.get_global_status() == 'Ready':
+                        process_output_name = process_output_object.get_name()
+                        events = process_output_object.get_all_events()
+                        for event in events:
+                            print "event status is!!!! - ", event.get_status()
+                            #if event.get_status() == "Ready" or event.get_status() == "Fail":
+                            print process_output_name, event.get_index(), event.get_data()
+                            event.process_event()
+                            # else:
+                            #     print "passed on --- ", process_output_name, event.get_index(), event.get_data()
+                    else:
+                        pass
 
 
+        elif UI_STATUS == "yes":
+            print "--- ui code not done!"
 
-
-
-
-
-
-
-
-class Process_Object(object):
-    """Each process_structure is a class representing each '.prcs' file which is a list of actual process Tasks
+class Process(object):
+    """Each process is a class representing each '.prcs' file which is a list of actual process Tasks
     data example - [[name, type, time_added, global_status, [[index, status, notes, v1, v2..], [index, status, notes, v1, v2, ...]], ...]
     this is a list of process_outputs, that make up a process
     """
@@ -95,42 +88,43 @@ class Process_Object(object):
     def __init__(self, process_data, process_name):
         self.process_data = process_data
         self.process_name = process_name
-        self.process_output_list = []
-        self.initiate_process_objects(process_data)
+        self.process_output_object_list = []
+        self.initiate_process_output_objects(process_data)
 
-    def initiate_process_objects(self, process_data):
+    def get_all_process_output_objects(self):
+        return self.process_output_object_list
+
+    # def assign_global_status(self):
+    #     return self.gl
+
+
+    def initiate_process_output_objects(self, process_data):
         for process_output_data in process_data:
             new_process_output = Process_Output_Object(process_output_data)
-            self.process_output_list.append(new_process_output)
+            self.process_output_object_list.append(new_process_output)
 
     def print_data(self):
         print "process_object - ", self.get_process_data()
-        for pp in self.process_output_list:
+        for pp in self.process_output_object_list:
             pp.print_data()
 
     def get_process_name(self):
         return self.process_name
 
     def process_objects(self):
-        return self.process_output_list
+        return self.process_output_object_list
 
     def get_process_output(self, name):
-        for process_output in self.process_output_list:
+        for process_output in self.process_output_object_list:
             if process_output.get_name() == name:
                 return process_output
 
     def get_process_data(self):
         process_data = []
-        for process_output in self.process_output_list:
+        for process_output in self.process_output_object_list:
             process_output_data = process_output.get_process_output_data()
             process_data.append(process_output_data)
             return process_data
-
-
-
-
-
-
 
 class Process_Output_Object(object):
     """List of events and assiated variables, each process represents one output from the output class"""
@@ -143,10 +137,25 @@ class Process_Output_Object(object):
         self.process_output_time_added = process_output_data[2]
         self.process_output_global_status = process_output_data[3]
         self.process_output_event_list_data = process_output_data[4]
-        self.event_types_dictionary = {'Make_Folders': Event_Make_Folders, 'Copy_Tree': Event_Copy_Tree}
+        self.event_types_dictionary = {'Make_Folders': Event_Make_Folders, 'Copy_Folder': Event_Copy_Folder}
 
         self.event_list = []
         self.initiate_events()
+        self.assign_global_status()
+
+    def get_all_events(self):
+        return self.event_list
+
+    def assign_global_status(self):
+        completed = True
+        for event in self.event_list:
+            if event.get_status() == 'Ready':
+                print "completed -- ", completed
+                completed = False
+        if completed == False:
+            self.set_global_status('Ready')
+        else:
+            self.set_global_status('Done')
 
     def initiate_events(self):
         new_index = 0
@@ -161,11 +170,14 @@ class Process_Output_Object(object):
         for pp in self.event_list:
             pp.print_data()
 
+    def set_global_status(self, status):
+        self.process_output_global_status = status
+
+    def get_global_status(self):
+        return self.process_output_global_status
+
     def get_name(self):
         return self.process_output_name
-
-    def events(self):
-        return self.event_list
 
     def get_event(self, index):
         event = self.event_list[index]
@@ -182,12 +194,6 @@ class Process_Output_Object(object):
             data = event.get_data()
             event_data.append(data)
         return event_data
-
-
-
-
-
-
 
 class Event_Object(object):
     """base class for events """
@@ -217,9 +223,18 @@ class Event_Object(object):
         extra_data = self.get_extra_data()
         return base_data + extra_data
 
-
-
-
+# class MyThread(QtCore.QThread):
+#     sig = QtCore.Signal(object)
+#
+#     def __init__(self, parent=None):
+#         QtCore.QThread.__init__(self, parent)
+#         self.exiting = 10
+#     ...
+#
+#     def run(self):
+#         ...
+#         self.sig.emit(market_book_result)
+#     ...
 
 class Event_Make_Folders(Event_Object):
 
@@ -233,9 +248,57 @@ class Event_Make_Folders(Event_Object):
     def get_extra_data(self):
         return [self.new_path]
 
-class Event_Copy_Tree(Event_Object):
+    def process_event(self):
+        try:
+            if self.status == 'Ready':
+                if os.path.exists(self.new_path) == False:
+                    os.makedirs(self.new_path)
+                    self.status = 'Done'
+                else:
+                    print "... need to handle fail 1"
+                    self.status = 'Done'
+            else:
+                print " ..... need to handle fail 0"
+        except:
+            print " .... need to handle fail 2"
+
+class Event_Copy_Folder(Event_Object):
 
     def __init__(self, event_data):
         Event_Object.__init__(self, event_data)
         self.source = event_data[3]
         self.destination = event_data[4]
+
+    def get_source(self):
+        return self.source
+
+    def get_destination(self):
+        return self.destination
+
+    def get_extra_data(self):
+        return [self.source, self.destination]
+
+    def get_folder_name_from_folder_path(self, path):
+        path_split = path.split('/')
+        folder_name = path_split[-1]
+        return folder_name
+
+    def process_event(self):
+        try:
+            if os.path.isdir(self.source) == True and os.path.isdir(self.destination) == True:
+                if self.status == "Ready":
+                    print "in copy --"
+                    folder_name = self.get_folder_name_from_folder_path(self.source)
+                    new_destination = self.destination + '/' + folder_name
+                    #os.mkdir(new_destination)
+                    shutil.copytree(self.source, new_destination)
+                    self.status = 'Done'
+                else:
+                    print "need to handle fail 0"
+            else:
+                print "... need to handle fail 1"
+        except:
+            print " .... need to handle fail 2"
+
+
+

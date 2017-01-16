@@ -11,7 +11,7 @@ class Output_Object_List(object):
         self.data_objects = data_object_list.get_data_objects()
         self.data_object_list = data_object_list
         self.output_object_list = []
-        self.output_types_dictionary = {'Make_Folders': Output_Make_Folders, 'Copy_Tree': Output_Copy_Tree}
+        self.output_types_dictionary = {'Make_Folders': Output_Make_Folders, 'Copy_Folder': Output_Copy_Folder}
 
     def create_new_output(self, output_type):
         """makes new output no data just from type"""
@@ -74,7 +74,7 @@ class Output_Object_List(object):
     def get_all_current_names(self):
         current_names = []
         for object in self.output_object_list:
-            current_names.append(object.get_process_name())
+            current_names.append(object.get_output_name())
         return current_names
 
     def get_new_name(self, output_type):
@@ -101,14 +101,14 @@ class Output_Object_List(object):
         if output != False:
             output.set_variable(variable, value)
 
-    def setup_processes_to_file(self, process_name):
+    def set_process_data_to_file(self, process_name):
         new_process_name = process_functions.get_new_process_name(process_name)
         new_process_file_path = process_functions.new_process_file(new_process_name)
         process = []
         for output in self.output_object_list:
             process_output = output.setup_process_output(self.data_object_list)
             process.append(process_output)
-        process_functions.set_process_to_file(new_process_file_path, process)
+        process_functions.set_process_data_to_file(new_process_file_path, process)
 
 
 
@@ -233,15 +233,15 @@ class Output_Make_Folders(Output_Object):
         """ creates a list, process task that has all the data to process this output [name, type, time_added, global_status, [[index, status, notes, v1, v2..], [index, status, notes, v1, v2, ...]]"""
         process_output_name = self.get_output_name()
         process_output_type = "Make_Folders"
-        tree = self.gv("tree")
-        tree_root = tree_functions.get_root_path_from_tree(tree)
+        tree_variable_name = self.gv("tree")
+        tree_root = tree_functions.get_root_path_from_tree(tree_variable_name)
         time_string = strftime("%Y-%m-%d %H:%M:%S", gmtime())
         global_status = "Ready"
         events = []
 
-        if self.check_activate(tree, tree_root) == True:
-            tree_variables = self.set_tree_variables(tree)
-            tree_paths = self.set_path_variables(tree)
+        if self.check_activate(tree_variable_name, tree_root) == True:
+            tree_variables = self.set_tree_variables(tree_variable_name)
+            tree_paths = self.set_path_variables(tree_variable_name)
 
             for data_object in data_object_list.get_data_objects():
                 tupples, found_all = self.get_values_for_tree_variables(data_object, tree_variables)
@@ -255,23 +255,79 @@ class Output_Make_Folders(Output_Object):
                     notes, status = self.add_basic_notes(notes, status, source_text, matched, index)
                     notes, status = self.add_specific_notes(notes, status, found_all)
 
-                    tree_path = tree_functions.apply_root_path_to_tree_path(tree, tree_path)
+                    tree_path = tree_functions.apply_root_path_to_tree_path(tree_variable_name, tree_path)
                     new_path = tree_functions.apply_variables_to_tree_path(tupples, tree_path)
                     events.append([index, status, notes, new_path])
-            else:
-                global_status = "Pass"
+        else:
+            global_status = "Pass"
 
         process_output = [process_output_name, process_output_type, time_string, global_status, events]
         return process_output
 
 
 
-class Output_Copy_Tree(Output_Object):
+class Output_Copy_Folder(Output_Object):
 
     def __init__(self, index, name):
         Output_Object.__init__(self, index, name)
         self.set_variable("source_variable", "")
         self.set_variable("destination_variable", "")
+
+    def set_source_variable(self, source_variable):
+        self.set_variable("source_variable", source_variable)
+        return source_variable
+
+    def set_destination_variable(self, destination_variable):
+        self.set_variable("source_variable", destination_variable)
+        return destination_variable
+
+    def check_activate(self, source_variable, destination_variable):
+        activate = True
+        return activate
+
+    def add_specific_notes(self, notes, status, found_source, found_destination):
+        if found_source == False:
+            notes.append("Source variable not in list build")
+            status = "Pass"
+        if found_destination == False:
+            notes.append("destination variable not in list build")
+            status = "Pass"
+        return notes, status
+
+
+    def setup_process_output(self, data_object_list):
+        """copys a folder to a new location"""
+        process_output_name = self.get_output_name()
+        process_output_type = "Copy_Folder"
+        time_string = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+        global_status = "Ready"
+        events = []
+
+        source_variable_name = self.gv("source_variable")
+        destination_variable_name = self.gv("destination_variable")
+
+        if self.check_activate(source_variable_name, destination_variable_name) == True:
+            for data_object in data_object_list.get_data_objects():
+                notes = []
+                status = "Ready"
+                source_text, found_source_text = data_object.get_variable('[SOURCE_TEXT]')
+                matched, found_matched = data_object.get_variable('[MATCHED]')
+                source, found_source = data_object.get_variable(source_variable_name)
+                destination, found_destination = data_object.get_variable(destination_variable_name)
+                index = data_object.get_index()
+
+                notes, status = self.add_basic_notes(notes, status, source_text, matched, index)
+                notes, status = self.add_specific_notes(notes, status, found_source, found_destination)
+                events.append([index, status, notes, source, destination])
+
+            pass
+
+        else:
+            global_status = "Pass"
+
+        process_output = [process_output_name, process_output_type, time_string, global_status, events]
+        return process_output
+
 
 
 

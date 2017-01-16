@@ -1,7 +1,10 @@
+import defaults
 import tree_functions
 import shelve
 import filter_object_classes
 import os
+
+ROOT_DIR = defaults.get_root_path()
 
 
 class Data_Object_List(object):
