@@ -110,9 +110,6 @@ class Output_Object_List(object):
             process.append(process_output)
         process_functions.set_process_data_to_file(new_process_file_path, process)
 
-
-
-
 class Output_Object(object):
 
     def __init__(self, index, name):
@@ -196,7 +193,6 @@ class Output_Object(object):
             status = "Pass"
         return notes, status
 
-
 class Output_Make_Folders(Output_Object):
 
     def __init__(self, index, name):
@@ -264,8 +260,6 @@ class Output_Make_Folders(Output_Object):
         process_output = [process_output_name, process_output_type, time_string, global_status, events]
         return process_output
 
-
-
 class Output_Copy_Folder(Output_Object):
 
     def __init__(self, index, name):
@@ -328,17 +322,6 @@ class Output_Copy_Folder(Output_Object):
         process_output = [process_output_name, process_output_type, time_string, global_status, events]
         return process_output
 
-
-
-
-# test_outputs_list = Output_Object_List()
-# test_outputs_list.create_new_output("Make_Folders")
-# test_outputs_list.create_new_output("Copy_Tree")
-# testfile = tree_functions.ROOT_DIR + "/test_shelf"
-# test_outputs_list.shelve_output_list_as_file(testfile)
-# test_outputs_list.temp_print_output_data()
-# test_outputs_list.load_output_list_from_file(testfile)
-# test_outputs_list.temp_print_output_data()
 
 
 

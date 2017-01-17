@@ -123,3 +123,16 @@ if __name__ == "__main__":
     sys.exit(app.exec_())
 
 
+# class MyThread(QtCore.QThread):
+#     sig = QtCore.Signal(object)
+#
+#     def __init__(self, parent=None):
+#         QtCore.QThread.__init__(self, parent)
+#         self.exiting = 10
+#     ...
+#
+#     def run(self):
+#         ...
+#         self.sig.emit(market_book_result)
+#     ...
+

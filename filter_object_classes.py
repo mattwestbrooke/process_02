@@ -6,12 +6,8 @@ import shelve
 import tree_functions
 
 
-
-
 # This can be removed...
 ROOT_DIR = os.path.dirname(sys.modules['__main__'].__file__)
-
-
 
 class Filter_Object_List(object):
 
@@ -133,7 +129,6 @@ class Filter_Object_List(object):
             avaliable_variables = self.get_variables_from_current_data_object_list(data_object_list)
             filter.apply_filter(data_object_list, avaliable_variables)
 
-
 class Filter_Object(object):
 
     def __init__(self, index, name):
@@ -217,7 +212,6 @@ class Filter_Object(object):
             new_confirmed_name = new_name
         return new_confirmed_name
 
-
 class Key_Filter(Filter_Object):
 
     def __init__(self, index, name):
@@ -270,7 +264,6 @@ class Key_Filter(Filter_Object):
                         data_object.set_variable('[MATCHED]', str(match_passed))
         else:
             self.activate = False
-
 
 class Combine_Filter(Filter_Object):
 
@@ -340,13 +333,6 @@ class Combine_Filter(Filter_Object):
                 data_object.set_variable(result_variable, output_value)
         else:
             self.activate = False
-
-
-
-
-
-
-
 
 
 

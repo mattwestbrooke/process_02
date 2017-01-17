@@ -3,9 +3,9 @@ import shutil
 import process_functions
 import defaults
 
+
 ROOT_DIR = defaults.get_root_path()
 UI_STATUS = defaults.get_ui_status()
-
 
 class Process_list(object):
     """List of all objects from each of the '.prcs', process files in the process folder"""
@@ -45,12 +45,14 @@ class Process_list(object):
     def set_event_status(self, event, status):
         event.set_status(status)
 
-    def save_all_process_data_list(self):
+    def save_all_process_data(self):
+        process_list_data = []
         for process in self.process_list:
             process_data = process.get_process_data()
-            process_name = process.get_process_name()
-            process_file_path = process_functions.get_process_path_from_name(process_name)
-            process_functions.set_process_data_to_file(process_file_path, process_data)
+            process_list_data.append(process_data)
+        process_name = process.get_process_name()
+        process_file_path = process_functions.get_process_path_from_name(process_name)
+        process_functions.set_process_data_to_file(process_file_path, process_list_data)
 
     def get_all_processes(self):
         return self.process_list
@@ -67,11 +69,9 @@ class Process_list(object):
                         events = process_output_object.get_all_events()
                         for event in events:
                             print "event status is!!!! - ", event.get_status()
-                            #if event.get_status() == "Ready" or event.get_status() == "Fail":
                             print process_output_name, event.get_index(), event.get_data()
                             event.process_event()
-                            # else:
-                            #     print "passed on --- ", process_output_name, event.get_index(), event.get_data()
+                            self.save_all_process_data()
                     else:
                         pass
 
@@ -223,18 +223,11 @@ class Event_Object(object):
         extra_data = self.get_extra_data()
         return base_data + extra_data
 
-# class MyThread(QtCore.QThread):
-#     sig = QtCore.Signal(object)
-#
-#     def __init__(self, parent=None):
-#         QtCore.QThread.__init__(self, parent)
-#         self.exiting = 10
-#     ...
-#
-#     def run(self):
-#         ...
-#         self.sig.emit(market_book_result)
-#     ...
+    def set_note_error(self, error):
+        if error in self.notes:
+            pass
+        else:
+            self.notes.append(error)
 
 class Event_Make_Folders(Event_Object):
 
@@ -255,12 +248,14 @@ class Event_Make_Folders(Event_Object):
                     os.makedirs(self.new_path)
                     self.status = 'Done'
                 else:
-                    print "... need to handle fail 1"
+                    self.set_note_error("PE_destination path not found")
                     self.status = 'Done'
             else:
-                print " ..... need to handle fail 0"
+                self.set_note_error("PE_event status not Ready")
+
         except:
-            print " .... need to handle fail 2"
+            self.set_note_error("PE_process error exception")
+            self.status = 'Fail'
 
 class Event_Copy_Folder(Event_Object):
 
@@ -285,20 +280,24 @@ class Event_Copy_Folder(Event_Object):
 
     def process_event(self):
         try:
-            if os.path.isdir(self.source) == True and os.path.isdir(self.destination) == True:
-                if self.status == "Ready":
-                    print "in copy --"
-                    folder_name = self.get_folder_name_from_folder_path(self.source)
-                    new_destination = self.destination + '/' + folder_name
-                    #os.mkdir(new_destination)
-                    shutil.copytree(self.source, new_destination)
-                    self.status = 'Done'
-                else:
-                    print "need to handle fail 0"
-            else:
-                print "... need to handle fail 1"
-        except:
-            print " .... need to handle fail 2"
 
+            if os.path.isdir(self.source) == True and os.path.isdir(self.destination) == True:
+                folder_name = self.get_folder_name_from_folder_path(self.source)
+                new_destination = self.destination + '/' + folder_name
+                if os.path.exists(new_destination) == False:
+                    if self.status == 'Ready':
+                        shutil.copytree(self.source, new_destination)
+                        self.status = 'Done'
+                    else:
+                        self.set_note_error("PE_event status not Ready")
+                else:
+                    self.set_note_error("PE_folder already in destination copy cannot overwrite")
+                    self.status = 'Fail'
+            else:
+                self.set_note_error("PE_source or destination path not found")
+                self.status = 'Fail'
+        except:
+            self.set_note_error("PE_process error exception")
+            self.status = 'Fail'
 
 

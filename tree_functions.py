@@ -160,17 +160,3 @@ def apply_variables_to_tree_path(variable_tupples, tree_path):
     return tree_path
 
 
-
-
-
-
-# key_string = "[SHOW]_Sq[SEQUENCE]_Sc[SCENE]_[SHOT]"
-# source_string = "AVE_SqCAB_Sc001_240"
-# split_char = "_"
-# result = get_key_break_list(key_string, split_char)
-#
-# print result
-#
-# result2 = get_variable_tupples_from_source_string(source_string, key_string, split_char)
-# print result2
-
