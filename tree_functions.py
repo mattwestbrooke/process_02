@@ -4,6 +4,7 @@ import defaults
 
 
 ROOT_DIR = defaults.get_root_path()
+TREE_ROOT_DIR = ROOT_DIR + '/trees/'
 
 def get_all_current_trees():
     trees = []
@@ -158,5 +159,21 @@ def apply_variables_to_tree_path(variable_tupples, tree_path):
         new_tree_path = tree_path.replace(ii[0], ii[1])
         tree_path = new_tree_path
     return tree_path
+
+def get_new_tree_variables(new_tree):
+    fname = ROOT_DIR + '/trees/' + new_tree + ".tree"
+    fname_root = ROOT_DIR + '/trees/' + new_tree + ".root"
+    fname_varb = ROOT_DIR + '/trees/' + new_tree + ".varb"
+    new_name_ext = new_tree + ".tree"
+    new_name = new_tree
+    return fname, fname_root, fname_varb, new_name_ext, new_name
+
+def make_new_tree(new_tree):
+    new_tree_file = open(TREE_ROOT_DIR + new_tree + '.tree', 'w')
+    new_root_file = open(TREE_ROOT_DIR + new_tree + '.root', 'w')
+    new_varb_file = open(TREE_ROOT_DIR + new_tree + '.varb', 'w')
+    new_tree_file.close()
+    new_root_file.close()
+    new_varb_file.close()
 
 
