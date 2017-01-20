@@ -10,7 +10,7 @@
 from PySide import QtCore, QtGui
 
 import process_tree_classes
-#self.process_tv = process_tree.TreeTest(self.tab)
+#self.tree_tv = process_tree_classes.TreeTest(self.tab)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):

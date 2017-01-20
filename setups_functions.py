@@ -16,7 +16,8 @@ def new_setup(new_name):
         shelve_file['output_object_list'] = output_object_data_list
         filter_object_data_list = []
         shelve_file['filter_object_list'] = filter_object_data_list
-        shelve_file['setup_input_type'] = "textfile"
+        shelve_file['setup_input_type'] = "text_file"
+        shelve_file['setup_input_data'] = ["", "", "", ""]
         shelve_file.close()
         made_new_file = True
 
@@ -24,7 +25,26 @@ def new_setup(new_name):
         print "1 - ", shelve_file['output_object_list']
         print "2 - ", shelve_file['filter_object_list']
         print "3 - ", shelve_file['setup_input_type']
+        print "4 - ", shelve_file['setup_input_data']
     return made_new_file
+
+def get_all_setups():
+    setups = []
+    setups_path = ROOT_DIR + '/setups'
+    for file in os.listdir(setups_path):
+        if file.endswith(".setp"):
+            file_split = file.split('.')
+            setups.append(file_split[0])
+
+    return setups
+
+def setup_exists(new_setup):
+    current_setups = get_all_setups()
+    if new_setup in current_setups:
+        found = True
+    else:
+        found = False
+    return found
 
 def save_input_type(setup_path, type):
     shelve_file = shelve.open(setup_path)
@@ -34,7 +54,19 @@ def save_input_type(setup_path, type):
 def load_input_type(setup_path):
     shelve_file = shelve.open(setup_path)
     type = shelve_file['setup_input_type']
+    shelve_file.close()
     return type
+
+def save_input_data(setup_path, data):
+    shelve_file = shelve.open(setup_path)
+    shelve_file['setup_input_data'] = data
+    shelve_file.close()
+
+def load_input_data(setup_path):
+    shelve_file = shelve.open(setup_path)
+    data = shelve_file['setup_input_data']
+    shelve_file.close()
+    return data
 
 def get_setup_path(name):
     setup_path = SETUP_PATH + '/' + name + '.setp'

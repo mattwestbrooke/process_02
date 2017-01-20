@@ -10,13 +10,14 @@ import datetime
 
 import tree_functions
 import process_functions
-import  defaults
+import setups_functions
+import defaults
 import setup_object_classes
 
 from PySide import QtCore, QtGui
 
 import generic_ui.data_viewer_005_UI
-import generic_ui.load_process_UI
+import generic_ui.load_setup_UI
 import generic_ui.process_mainUI_004 as main_dialog
 
 ROOT_DIR = defaults.get_root_path()
@@ -30,11 +31,14 @@ class MainDialog(QtGui.QMainWindow, main_dialog.Ui_MainWindow ):
         super(MainDialog, self).__init__(parent)
         self.setupUi(self)
         self.process_setup = setup_object_classes.Setup_Object("untitled")
+        self.enable_ui_for_setup_loaded()
+        self.set_type_buttons_from_input_type()
+
 
         ## GENERIC UI INIT
 
         atexit.register(self.save_process)
-        self.current_process_le.setEnabled(False)
+        self.current_setup_le.setEnabled(False)
 
         ## TREES UI INIT
 
@@ -60,25 +64,259 @@ class MainDialog(QtGui.QMainWindow, main_dialog.Ui_MainWindow ):
         self.populate_keys()
         self.populate_constants()
 
-        # ## TAB 3
-        #
-        # self.enter_values_te.setDisabled(True)
-        # self.set_folder_input_le.setDisabled(True)
-        # self.connect(self.set_file_input_b, QtCore.SIGNAL("clicked()"), self.set_file_input_path)
-        # self.connect(self.new_process_b, QtCore.SIGNAL("clicked()"), self.new_process)
-        # self.connect(self.save_process_b, QtCore.SIGNAL("clicked()"), self.save_process)
-        # self.connect(self.load_process_b, QtCore.SIGNAL("clicked()"), self.load_process)
-        # self.connect(self.set_folder_input_b, QtCore.SIGNAL("clicked()"), self.set_folder_input_path)
-        #
-        # ## TAB 4
-        #
-        # self.connect(self.refresh_filters_b, QtCore.SIGNAL("clicked()"), self.refresh_data)
-        # self.connect(self.new_filter_b, QtCore.SIGNAL("clicked()"), self.new_filter)
-        # self.populate_filters_box()
+        ## SETUPS AND OUTPUTS UI INIT
+
+        self.set_file_input_le.setDisabled(True)
+        self.current_setup_le.setText(self.process_setup.setup_name)
+        self.connect(self.new_setup_b, QtCore.SIGNAL("clicked()"), self.new_setup)
+        self.connect(self.save_setup_b, QtCore.SIGNAL("clicked()"), self.save_setup)
+        self.connect(self.saveas_setup_b, QtCore.SIGNAL("clicked()"), self.save_setup_as)
+        self.connect(self.load_setup_b, QtCore.SIGNAL("clicked()"), self.load_setup_by_ui)
+
+        self.connect(self.set_file_input_b, QtCore.SIGNAL("clicked()"), self.set_file_input_path)
+        self.connect(self.text_file_type_b, QtCore.SIGNAL("clicked()"), self.text_file_type_press)
+        self.connect(self.folder_type_b, QtCore.SIGNAL("clicked()"), self.folder_type_press)
+        self.connect(self.enter_text_type_b, QtCore.SIGNAL("clicked()"), self.enter_text_type_press)
+        self.connect(self.xl_file_type_b, QtCore.SIGNAL("clicked()"), self.xl_file_type_press)
+
+        self.set_file_input_le.editingFinished.connect(self.handle_file_input_sig)
+
+
+        ## FILTERS UI
+
+        self.connect(self.refresh_filters_b, QtCore.SIGNAL("clicked()"), self.refresh_filters)
+        self.connect(self.new_filter_b, QtCore.SIGNAL("clicked()"), self.new_filter)
+        self.populate_filters_box()
+
+    ############ SIGNALS ########################
+
+    def handle_file_input_sig(self):
+        if self.set_file_input_le.isModified():
+            self.update_type_data()
+
+    ############ GENERIC ########################
 
     def save_process(self):
-        print "save!!"
+        self.save_setup()
 
+    ############ SETUP UI FUNCTIONS #############
+
+    def new_setup(self):
+        new_setup_name = self.new_setup_le.text()
+        if new_setup_name != "":
+            if setups_functions.setup_exists(new_setup_name) == False:
+                setups_functions.new_setup(new_setup_name)
+            self.load_setup(new_setup_name)
+
+    def load_setup(self, new_setup_name):
+        self.clear_all_setup_iu()
+        self.process_setup.load_setup(new_setup_name)
+        self.current_setup_le.setText(new_setup_name)
+        self.enable_ui_for_setup_loaded()
+
+    def enable_ui_for_setup_loaded(self):
+        self.file_input_frame.setEnabled(True)
+        self.tab_4.setEnabled(True)
+        #self.tab_5.setEnabled(True)
+
+    def disable_ui_for_setup_loaded(self):
+        self.file_input_frame.setEnabled(False)
+        self.tab_4.setEnabled(False)
+        #self.tab_5.setEnabled(False)
+
+    def load_setup_by_ui(self):
+        dialog = New_Setup_Dialog()
+        if dialog.exec_():
+            our_procs = []
+            for file in os.listdir(ROOT_DIR + '/setups/'):
+                our_procs.append(file)
+                print file
+            for proc_a in our_procs:
+                dialog.load_process_lw.addItem(proc_a)
+            selected = dialog.load_process_lw.currentItem().text()
+            print "we got as selected - ", selected
+            selected_split = selected.split('.')
+            self.load_setup(selected_split[0])
+
+    def save_setup(self):
+        self.process_setup.save_setup()
+
+    def save_setup_as(self):
+        save_as_name = self.new_setup_le.text()
+        if save_as_name != "":
+            self.process_setup.save_setup_as(save_as_name)
+            self.load_setup(save_as_name)
+
+    def clear_all_setup_iu(self):
+        self.current_setup_le.clear()
+        self.set_file_input_le.clear()
+        self.filters_le.clear()
+        self.filters_lw.clear()
+        self.data_object_lw.clear()
+        self.output_list.clear()
+        self.new_setup_le.clear()
+
+
+    ########### PROCESS TYPE UI FUNCTIONS #######
+
+
+    def set_file_input_path(self):
+        if self.process_setup.setup_input_type == "text_file":
+            self.change_text_file_path()
+            print "setting - 0"
+        elif self.process_setup.setup_input_type == "folder":
+            self.change_folder_path()
+            print "setting - 1"
+        elif self.process_setup.setup_input_type == "xl_file":
+            self.change_xl_file_path()
+            print "setting - 3"
+
+    def text_file_type_press(self):
+        self.process_setup.setup_input_type = "text_file"
+        self.set_type_buttons_from_input_type()
+        pass
+
+    def folder_type_press(self):
+        self.process_setup.setup_input_type = "folder"
+        self.set_type_buttons_from_input_type()
+        pass
+
+    def enter_text_type_press(self):
+        self.process_setup.setup_input_type = "enter_text"
+        self.set_type_buttons_from_input_type()
+        pass
+
+    def xl_file_type_press(self):
+        self.process_setup.setup_input_type = "xl_file"
+        self.set_type_buttons_from_input_type()
+        pass
+
+    def set_type_buttons_from_input_type(self):
+        if self.process_setup.setup_input_type == "text_file":
+            self.text_file_type_b.setStyleSheet("background-color: green")
+            self.folder_type_b.setStyleSheet("background-color: grey")
+            self.enter_text_type_b.setStyleSheet("background-color: grey")
+            self.xl_file_type_b.setStyleSheet("background-color: grey")
+            self.set_file_input_le.setText(self.process_setup.get_setup_input_data(0))
+            self.set_file_input_b.setHidden(False)
+            self.set_file_input_le.setDisabled(True)
+
+        elif self.process_setup.setup_input_type == "folder":
+            self.text_file_type_b.setStyleSheet("background-color: grey")
+            self.folder_type_b.setStyleSheet("background-color: green")
+            self.enter_text_type_b.setStyleSheet("background-color: grey")
+            self.xl_file_type_b.setStyleSheet("background-color: grey")
+            self.set_file_input_le.setText(self.process_setup.get_setup_input_data(1))
+            self.set_file_input_b.setHidden(False)
+            self.set_file_input_le.setDisabled(True)
+
+        elif self.process_setup.setup_input_type == "enter_text":
+            self.text_file_type_b.setStyleSheet("background-color: grey")
+            self.folder_type_b.setStyleSheet("background-color: grey")
+            self.enter_text_type_b.setStyleSheet("background-color: green")
+            self.xl_file_type_b.setStyleSheet("background-color: grey")
+            self.set_file_input_le.setText(self.process_setup.get_setup_input_data(2))
+            self.set_file_input_b.setHidden(True)
+            self.set_file_input_le.setDisabled(False)
+
+        elif self.process_setup.setup_input_type == "xl_file":
+            self.text_file_type_b.setStyleSheet("background-color: grey")
+            self.folder_type_b.setStyleSheet("background-color: grey")
+            self.enter_text_type_b.setStyleSheet("background-color: grey")
+            self.xl_file_type_b.setStyleSheet("background-color: green")
+            self.set_file_input_le.setText(self.process_setup.get_setup_input_data(3))
+            self.set_file_input_b.setHidden(False)
+            self.set_file_input_le.setDisabled(True)
+
+        self.save_setup()
+
+    def update_type_data(self):
+        if self.process_setup.setup_input_type == "text_file":
+            self.process_setup.set_setup_input_data(self.set_file_input_le.text(), 0)
+            print "update - 0"
+        elif self.process_setup.setup_input_type == "folder":
+            self.process_setup.set_setup_input_data(self.set_file_input_le.text(), 1)
+            print "update - 1"
+        elif self.process_setup.setup_input_type == "enter_text":
+            self.process_setup.set_setup_input_data(self.set_file_input_le.text(), 2)
+            print "update - 2"
+        elif self.process_setup.setup_input_type == "xl_file":
+            self.process_setup.set_setup_input_data(self.set_file_input_le.text(), 3)
+            print "update - 3"
+
+        self.save_setup()
+
+    def change_text_file_path(self):
+        """ Change text file path for input type """
+
+        if self.set_file_input_le.text() == "" or os.path.isdir(self.set_file_input_le.text()) == False:
+            current_dir = os.getcwd()
+        else:
+            current_dir = self.root_path_le.text()
+        fileObj = QtGui.QFileDialog.getOpenFileName(self, __appname__ + " Open File Dialog", dir=current_dir,
+                                              filter="Input Text File (*.txt)")
+        new_text_file = fileObj[0]
+        if str(new_text_file) != "":
+            self.set_file_input_le.setText(new_text_file)
+            self.process_setup.set_setup_input_data(new_text_file, 0)
+            self.save_setup()
+        elif str(new_text_file) == "":
+            return
+
+    def change_folder_path(self):
+        """ Change folderpath for input type """
+
+        if self.set_file_input_le.text() == "" or os.path.isdir(self.set_file_input_le.text()) == False:
+            current_dir = os.getcwd()
+        else:
+            current_dir = self.root_path_le.text()
+        new_folder_path = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory", current_dir))
+        if str(new_folder_path) != "" and str(new_folder_path)[:13] != "/Applications" and str(new_folder_path)[
+                                                                                       :10] != "/Developer" and str(
+            new_folder_path)[:7] != "/System" and str(new_folder_path)[:8] != "/Library" and str(
+            new_folder_path) != "/":
+            self.set_file_input_le.setText(new_folder_path)
+            self.process_setup.set_setup_input_data(new_folder_path, 1)
+            self.save_setup()
+        elif str(new_folder_path) == "":
+            return
+
+    def change_xl_file_path(self):
+        """ Change xl file path for input type """
+
+        if self.set_file_input_le.text() == "" or os.path.isdir(self.set_file_input_le.text()) == False:
+            current_dir = os.getcwd()
+        else:
+            current_dir = self.root_path_le.text()
+        fileObj = QtGui.QFileDialog.getOpenFileName(self, __appname__ + " Open File Dialog", dir=current_dir,
+                                                    filter="Input Text File (*.xls)")
+        new_text_file = fileObj[0]
+        if str(new_text_file) != "":
+            self.set_file_input_le.setText(new_text_file)
+            self.process_setup.set_setup_input_data(new_text_file, 3)
+            self.save_setup()
+        elif str(new_text_file) == "":
+            return
+
+    ############ OUTPUT UI FUNCTIONS ############
+
+
+    ############ FILTER UI FUNCTIONS ############
+
+    def populate_filters_box(self):
+        filters = []
+        for file in os.listdir(ROOT_DIR + '/filters/'):
+            if file.endswith(".flt"):
+                fsplit = file.split(".")
+                filters.append(fsplit[0])
+        self.new_filter_cb.addItems(filters)
+
+    def new_filter(self):
+        new_filter_type = str(self.new_filter_cb.currentText())
+        self.process_setup.data_object_list.filter_object_list.create_new_filter(new_filter_type)
+
+    def refresh_filters(self):
+        pass
 
     ############ TREE UI FUNCTIONS ##############
 
@@ -370,6 +608,25 @@ class MainDialog(QtGui.QMainWindow, main_dialog.Ui_MainWindow ):
         if os.path.exists(del_fname) == True:
             os.remove(del_fname)
             self.populate_constants()
+
+
+
+class New_Setup_Dialog(QtGui.QDialog, generic_ui.load_setup_UI.Ui_Dialog):
+
+    def __init__(self, parent=None):
+        super(New_Setup_Dialog, self).__init__(parent)
+        self.setupUi(self)
+        self.setWindowTitle("Load Setup")
+
+        our_procs = []
+        for file in os.listdir(ROOT_DIR + '/setups/'):
+            our_procs.append(file)
+            print file
+        for proc_a in our_procs:
+            self.load_process_lw.addItem(proc_a)
+
+
+
 
 
 
