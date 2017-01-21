@@ -19,7 +19,7 @@ class Dv_005(QtGui.QWidget):
         self.id = id
         self.variables = []
 
-    def sv(self, attribute, value):
+    def set_variable(self, attribute, value):
         found = False
         for ii in self.variables:
             if ii[0] == attribute:
@@ -31,7 +31,7 @@ class Dv_005(QtGui.QWidget):
         self.tableWidget.resizeColumnsToContents()
         return found
 
-    def gv(self, attribute):
+    def get_variable(self, attribute):
         found = False
         result = ""
         for jj in self.variables:
@@ -42,7 +42,7 @@ class Dv_005(QtGui.QWidget):
         return result, found
 
     def populate_list(self):
-        print "populating keys"
+        #print "populating keys"
         self.tableWidget.setRowCount(0)
         for ll in self.variables:
             rowPosition = self.tableWidget.rowCount()

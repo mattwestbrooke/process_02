@@ -11,6 +11,7 @@ import datetime
 import tree_functions
 import process_functions
 import setups_functions
+import data_input_functions
 import defaults
 import setup_object_classes
 
@@ -19,6 +20,9 @@ from PySide import QtCore, QtGui
 import generic_ui.data_viewer_005_UI
 import generic_ui.load_setup_UI
 import generic_ui.process_mainUI_004 as main_dialog
+from filter_ui import date_filter_UI, add_filter_UI, combine_filter_UI, key_filter_UI, split_filter_UI, tree_filter_UI
+
+
 
 ROOT_DIR = defaults.get_root_path()
 UI_STATUS = defaults.get_ui_status()
@@ -33,6 +37,7 @@ class MainDialog(QtGui.QMainWindow, main_dialog.Ui_MainWindow ):
         self.process_setup = setup_object_classes.Setup_Object("untitled")
         self.enable_ui_for_setup_loaded()
         self.set_type_buttons_from_input_type()
+        self.filter_ui_dictionary = {'Key_Filter': key_filter_UI, 'Combine_Filter': combine_filter_UI}
 
 
         ## GENERIC UI INIT
@@ -304,19 +309,108 @@ class MainDialog(QtGui.QMainWindow, main_dialog.Ui_MainWindow ):
     ############ FILTER UI FUNCTIONS ############
 
     def populate_filters_box(self):
+        filters_dictionary = self.process_setup.data_object_list.filter_object_list.filter_types_dictionary
         filters = []
-        for file in os.listdir(ROOT_DIR + '/filters/'):
-            if file.endswith(".flt"):
-                fsplit = file.split(".")
-                filters.append(fsplit[0])
+        for filter_type in filters_dictionary:
+            filters.append(filter_type)
         self.new_filter_cb.addItems(filters)
 
     def new_filter(self):
         new_filter_type = str(self.new_filter_cb.currentText())
-        self.process_setup.data_object_list.filter_object_list.create_new_filter(new_filter_type)
+        new_filter_name = self.process_setup.data_object_list.filter_object_list.create_new_filter(new_filter_type)
 
     def refresh_filters(self):
-        pass
+        self.filters_lw.clear()
+        self.refresh_data_objects(self.get_input_list())
+        self.process_setup.data_object_list.filter_object_list.apply_filters(self.process_setup.data_object_list.data_object_list)
+        if UI_STATUS == "yes":
+            print "in ui setup --passed"
+            self.refresh_data_objects_UI()
+
+    def refresh_data_objects(self, input_list):
+        self.process_setup.data_object_list.setup_data_objects_from_input_list(input_list)
+
+    def get_input_list(self):
+        input_type = self.process_setup.get_setup_input_type()
+        input_list = []
+        if input_type == "text_file":
+            input_list = data_input_functions.get_input_list_from_text_file(self.set_file_input_le.text())
+        elif self.process_setup.setup_input_type == "folder":
+            print "not coded yet"
+            input_list = []
+        elif self.process_setup.setup_input_type == "enter_text":
+            print "not coded yet"
+            input_list = []
+        elif self.process_setup.setup_input_type == "xl_file":
+            print "not coded yet"
+        print "input_list --- ", input_list
+        return input_list
+
+    def refresh_data_objects_UI(self):
+        self.build_data_objects_UI()
+        self.build_filter_objects_UI()
+
+    def build_data_objects_UI(self):
+        print "populate data widgets"
+        self.data_object_lw.clear()
+        data_object_list = self.process_setup.data_object_list.data_object_list
+        for data_object in data_object_list:
+            data_object_UI = generic_ui.data_viewer_005_UI.Dv_005()
+            data_object_UI.label.setText(str(data_object.get_index()))
+            vars = data_object.get_variable_tupples()
+            for var in range(0, len(vars)):
+                data_object_UI.set_variable(vars[var][0], vars[var][1])
+
+            data_object_UI.populate_list()
+            data_object_widget = QtGui.QListWidgetItem()
+            data_object_widget.setSizeHint(QtCore.QSize(600, (32 + ((len(vars)) * 32))))
+            self.data_object_lw.addItem(data_object_widget)
+            self.data_object_lw.setItemWidget(data_object_widget, data_object_UI)
+
+    def build_filter_objects_UI(self):
+        print "in build filter objects"
+        self.filters_lw.clear()
+        filter_object_list = self.process_setup.data_object_list.filter_object_list.filter_object_list
+        filter_ui_dictionary = self.filter_ui_dictionary
+        #  [index, name, activate, filter_variables, avaliable_variables]
+        #  new_output_object = self.output_types_dictionary[output_type](new_index, new_name)
+        for filter in filter_object_list:
+            filter_data = filter.get_full_data()
+            filter_name = filter_data[1]
+            filter_type = ((filter_name).split('-'))[0]
+            new_filter_UI_object = filter_ui_dictionary[filter_type].filter_UI()
+
+            new_filter_UI_object.update_filter_signal.connect(self.update_filter)
+            new_filter_UI_object.delete_filter_signal.connect(self.delete_filter)
+
+            new_filter_UI_object.name_1.setText(filter_name)
+            new_filter_UI_object.set_variables(filter_data)
+
+            new_filter_UI_widget = QtGui.QListWidgetItem()
+            new_filter_UI_widget.setSizeHint(QtCore.QSize(new_filter_UI_object.width_default, new_filter_UI_object.height_default))
+            self.filters_lw.addItem(new_filter_UI_widget)
+            self.filters_lw.setItemWidget(new_filter_UI_widget, new_filter_UI_object)
+
+    def update_filter(self, filter_data):
+        # print "in update filter"
+        #  [index, name, activate, filter_variables, avaliable_variables]
+        self.process_setup.data_object_list.filter_object_list.temp_print_filter_data()
+        filter = self.process_setup.data_object_list.filter_object_list.find_filter_from_name(filter_data[1])
+        for tupple in filter_data[3]:
+            filter.set_variable(tupple[0], tupple[1])
+        self.process_setup.save_setup()
+
+
+    def delete_filter(self, filter_to_delete):
+        print "in delete filter"
+
+
+
+
+
+
+
+
 
     ############ TREE UI FUNCTIONS ##############
 

@@ -21,6 +21,7 @@ class Filter_Object_List(object):
         new_filter_name = self.get_new_filter_name(filter_type)
         new_filter_object = self.filter_types_dictionary[filter_type](new_filter_index, new_filter_name)
         self.add_new_filter_to_filter_list(new_filter_object)
+        return new_filter_name
 
     def create_new_filter_apply_data(self, filter_type, data):
         """ makes a new filter object from shelved data
@@ -70,11 +71,9 @@ class Filter_Object_List(object):
             type = self.get_filter_type_from_name(data[1])
             self.create_new_filter_apply_data(type, data)
 
-
     def get_filter_type_from_name(self, name):
         name_split = name.split('-')
         return name_split[0]
-
 
     def get_all_current_filter_names(self):
         current_filter_names = []
@@ -101,12 +100,10 @@ class Filter_Object_List(object):
                 found_filter = filter
         return found_filter
 
-
     def set_filter_variable_from_variable_name(self, variable, value, filter_name):
         filter = self.find_filter_from_name(filter_name)
         if filter != False:
             filter.set_variable(variable, value)
-
 
     def get_variable_names_from_variable_tupples(self, variable_tupples):
         names = []
@@ -186,7 +183,6 @@ class Filter_Object(object):
                 result = filter_variable_tupple[1]
                 found = True
         return result, found
-
 
     def get_full_data(self):
         return [self.index, self.name, self.activate, self.filter_variables, self.avaliable_variables]

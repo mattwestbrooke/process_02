@@ -60,6 +60,13 @@ class Data_Object_List(object):
         for data in data_object_data_list:
             self.create_new_data_object_and_set_variables(data[0], data[1])
 
+    def setup_data_objects_from_input_list(self, input_list):
+        self.clear_data()
+        index = 0
+        for input_string in input_list:
+            self.create_new_data_object_and_set_variables(index, [["[SOURCE_TEXT]", input_string]])
+            index = index +1
+
     def clear_data(self):
         self.data_object_list = []
 

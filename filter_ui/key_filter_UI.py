@@ -8,6 +8,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from PySide import QtCore, QtGui
+import tree_functions
 import sys
 import os
 
@@ -21,47 +22,59 @@ class filter_UI(QtGui.QWidget):
         super(filter_UI, self).__init__()
 
         self.setupUi()
-        self.connect(self.save_b, QtCore.SIGNAL("clicked()"), self.update_vars)
+        self.connect(self.save_b, QtCore.SIGNAL("clicked()"), self.update_filter)
         self.connect(self.hide_b, QtCore.SIGNAL("clicked()"), self.delete_filter)
-        self.connect(self.key_2, QtCore.SIGNAL("currentIndexChanged(const QString&)"), self.update_vars)
-        self.connect(self.variavle_3, QtCore.SIGNAL("currentIndexChanged(const QString&)"), self.update_vars)
+        self.connect(self.key_2, QtCore.SIGNAL("currentIndexChanged(const QString&)"), self.update_filter)
+        self.connect(self.variavle_3, QtCore.SIGNAL("currentIndexChanged(const QString&)"), self.update_filter)
         self.save_b.setHidden(True)
+        self.width_default = 400
+        self.height_default = 120
+        self.variable_count = 4
 
 
-    def set_variables(self, filt_vars):
+    def set_variables(self, filter_data):
+        # filter data -- [index, name, activate, filter_variables, avaliable_variables]
+        # self.set_variable("key_filter", "not_set")
+        # self.set_variable("active_variable", "not_set")
+        # self.set_variable("split_char", "_")
 
         self.key_2.blockSignals(True)
         self.variavle_3.blockSignals(True)
-        self.gfilt_vars = filt_vars[1]
+        self.filter_index = filter_data[0]
+        self.filter_name = filter_data[1]
+        self.filter_activate = filter_data[2]
+        self.filter_variables = filter_data[3]
+        self.avaliable_variables = filter_data[4]
+        self.key_filter, found1 = self.get_variable("key_filter")
+        self.active_variable, found2 = self.get_variable("active_variable")
+        self.split_char, found3 = self.get_variable("split_char")
 
-        print "############### - gfilt KF - ", self.gfilt_vars
 
-        keys = self.get_keys()
+        keys = tree_functions.get_all_current_keys()
         self.key_2.addItems(keys)
-        self.variavle_3.addItems(filt_vars[1])
+        self.variavle_3.addItems(self.avaliable_variables)
 
-        index = self.key_2.findText(str(filt_vars[2]), QtCore.Qt.MatchFixedString)
+        index = self.key_2.findText(str(self.key_filter), QtCore.Qt.MatchFixedString)
         if index >= 0:
             self.key_2.setCurrentIndex(index)
 
-        index = self.variavle_3.findText(str(filt_vars[3]), QtCore.Qt.MatchFixedString)
+        index = self.variavle_3.findText(str(self.active_variable), QtCore.Qt.MatchFixedString)
         if index >= 0:
             self.variavle_3.setCurrentIndex(index)
         self.key_2.blockSignals(False)
         self.variavle_3.blockSignals(False)
 
-    def get_keys(self):
-        keys = []
-        keys.append("not set")
-        for file in os.listdir(ROOT_DIR + '/keys/'):
-            if file.endswith(".key"):
-                fsplit = file.split(".")
-                keys.append(fsplit[0])
-        #print "keys found - ", keys
-        return keys
+    # def get_keys(self):
+    #     keys = []
+    #     keys.append("not set")
+    #     for file in os.listdir(ROOT_DIR + '/keys/'):
+    #         if file.endswith(".key"):
+    #             fsplit = file.split(".")
+    #             keys.append(fsplit[0])
+    #     return keys
 
-    def update_vars(self):
-        update = [str(self.name_1.text()), self.gfilt_vars ,str(self.key_2.currentText()), str(self.variavle_3.currentText())]
+    def update_filter(self):
+        update = [str(self.filter_index), self.filter_name, self.filter_activate ,[["key_filter",str(self.key_2.currentText())], ["active_variable",str(self.variavle_3.currentText())], ["split_char", "_"]],[]]
         self.update_filter_signal.emit(update)
         #self.emit(SIGNAL("didSomething"), "important", "information")
 
@@ -69,6 +82,15 @@ class filter_UI(QtGui.QWidget):
         #print "in delete filter (in filter)"
         to_delete = self.name_1.text()
         self.delete_filter_signal.emit(str(to_delete))
+
+    def get_variable(self, attribute):
+        found = False
+        result = ""
+        for filter_variable_tupple in self.filter_variables:
+            if filter_variable_tupple[0] == attribute:
+                result = filter_variable_tupple[1]
+                found = True
+        return result, found
 
 
 
