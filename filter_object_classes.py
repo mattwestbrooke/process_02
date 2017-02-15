@@ -29,18 +29,29 @@ class Filter_Object_List(object):
         """
         new_filter_index = self.get_next_filter_index()
         new_filter_name = data[1]
-        new_variables = data[2]
-        new_available_variables = data[3]
+        new_variables = data[3]
+        new_available_variables = data[4]
         new_filter_object = self.filter_types_dictionary[filter_type](new_filter_index, new_filter_name)
-        new_filter_object.set_output_name(new_filter_name)
+        new_filter_object.set_filter_name(new_filter_name)
         new_filter_object.set_all_variables(new_variables)
-        new_filter_object.set_all_avaiable_variables(new_available_variables)
+        new_filter_object.set_all_avaliable_variables(new_available_variables)
         self.add_new_filter_to_filter_list(new_filter_object)
 
     def temp_print_filter_data(self):
-        print "current object data -"
+        #print "current object data -"
         for obj in self.filter_object_list:
             print str(obj.get_full_data())
+
+    def get_full_filter_list(self):
+        full_filter_list = []
+        for obj in self.filter_object_list:
+            full_filter_list.append(obj.get_full_data())
+        return full_filter_list
+
+    def shelve_filter_list_from_list(self, filter_object_data_list, full_filename):
+        shelve_file = shelve.open(full_filename)
+        shelve_file['filter_object_list'] = filter_object_data_list
+        shelve_file.close()
 
     def add_new_filter_to_filter_list(self, new_filter_object):
         new_filter_object.set_index(self.get_next_filter_index())
@@ -51,18 +62,26 @@ class Filter_Object_List(object):
         return length
 
     def shelve_filter_list_as_file(self, full_filename):
-        print "saving shelving filter list - ", full_filename
+        #print "saving shelving filter list - ", full_filename
+        #print "--x our filters shelve"
+        #self.temp_print_filter_data()
+        #print "--x all printed"
         filter_object_data_list = []
         for filter_object in self.filter_object_list:
             data = filter_object.get_full_data()
-            print "shelving data - ", data
+            #print "shelving data - ", data
             filter_object_data_list.append(data)
         shelve_file = shelve.open(full_filename)
         shelve_file['filter_object_list'] = filter_object_data_list
         shelve_file.close()
 
+        #shelve_file = shelve.open(full_filename)
+        #filter_object_data_list = shelve_file['filter_object_list']
+        #shelve_file.close()
+        #print "we just shelved ....,", filter_object_data_list
+
     def load_filter_list_from_file(self, full_filename):
-        print "loading shelved filter list - ", full_filename
+        #print "loading shelved filter list - ", full_filename
         self.filter_object_list = []
         shelve_file = shelve.open(full_filename)
         filter_object_data_list = shelve_file['filter_object_list']
@@ -70,6 +89,8 @@ class Filter_Object_List(object):
         for data in filter_object_data_list:
             type = self.get_filter_type_from_name(data[1])
             self.create_new_filter_apply_data(type, data)
+
+        #print "we just loaded from shelf....,", filter_object_data_list
 
     def get_filter_type_from_name(self, name):
         name_split = name.split('-')
@@ -126,6 +147,7 @@ class Filter_Object_List(object):
             avaliable_variables = self.get_variables_from_current_data_object_list(data_object_list)
             filter.apply_filter(data_object_list, avaliable_variables)
 
+
 class Filter_Object(object):
 
     def __init__(self, index, name):
@@ -178,6 +200,7 @@ class Filter_Object(object):
     def get_variable(self, attribute):
         found = False
         result = ""
+        print "-- varb Test -- ", self.filter_variables
         for filter_variable_tupple in self.filter_variables:
             if filter_variable_tupple[0] == attribute:
                 result = filter_variable_tupple[1]
@@ -248,13 +271,13 @@ class Key_Filter(Filter_Object):
         self.set_all_avaliable_variables(avaliable_variables)
         if self.activate_qualifier(key_filter, found_key_filter, active_variable, found_active_variable) == True:
             self.activate = True
-            print "activated Key_filter!!!"
+            #print "activated Key_filter!!!"
             for data_object in data_object_list:
                 active_variable_value, active_variable_isfound = data_object.get_variable(str(active_variable))
                 key_string_value = tree_functions.get_key_string_from_key_file(key_filter)
                 if active_variable_isfound == True:
                     variable_tuples, match_passed = tree_functions.get_variable_tupples_from_source_string(active_variable_value, key_string_value, "_")
-                    print "var tupples -", variable_tuples
+                    #print "var tupples -", variable_tuples
                     for variable_tupple in variable_tuples:
                         data_object.set_variable(variable_tupple[0], variable_tupple[1])
                         data_object.set_variable('[MATCHED]', str(match_passed))
@@ -358,7 +381,7 @@ def key_filter(self, filter_vars):
 
 
 def combine_filter(self, filter_vars):
-    print "in combine filter"
+    #print "in combine filter"
     t1 = filter_vars[2]
     v1 = filter_vars[3]
     t2 = filter_vars[4]
@@ -417,19 +440,19 @@ def add_filter(self, filter_vars):
 
 
 def date_filter(self, filter_vars):
-    print "do the date!! - ", filter_vars
+    #print "do the date!! - ", filter_vars
     now = datetime.datetime.now()
     new_var = "[DATE_TIME]"
     time_filters = filter_vars[2]
     time_string = now.strftime(time_filters)
-    print "time -- ", time_string
+    #print "time -- ", time_string
     for co in self.container_list:
         co.sv(new_var, time_string)
         self.add_current_filter_variables(new_var)
 
 
 def tree_filter(self, filter_vars):
-    print "processing tree filter"
+    #print "processing tree filter"
     tree = filter_vars[2]
     path_key = filter_vars[3]
     new_variable_name = filter_vars[4]
@@ -454,7 +477,7 @@ def tree_filter(self, filter_vars):
 
 
 def split_filter(self, filter_vars):
-    print "in split filter"
+    #print "in split filter"
     source_var = filter_vars[2]
     split_char = filter_vars[3]
     split_type = filter_vars[4]

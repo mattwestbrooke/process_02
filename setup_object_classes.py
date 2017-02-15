@@ -50,30 +50,44 @@ class Setup_Object(object):
         self.setup_input_data[index] = data
 
     def get_setup_input_data(self, index):
-        print 'index - ', index
+        #print 'index - ', index
         return self.setup_input_data[index]
 
     def load_setup(self, setup):
         load_setup_path, create_new = setups_functions.get_setup_path(setup)
-        print "path -- ", load_setup_path
-        setups_functions.load_file_to_setup(load_setup_path, self.data_object_list.filter_object_list, self.output_object_list)
+        #print "path -- ", load_setup_path
+        setups_functions.load_file_to_setup(load_setup_path, self.data_object_list, self.output_object_list)
         self.set_names(setup)
         self.setup_input_type = setups_functions.load_input_type(load_setup_path)
         self.setup_input_data = setups_functions.load_input_data(load_setup_path)
 
     def save_setup(self):
-        setups_functions.save_setup_to_file(self.setup_path_name, self.data_object_list.filter_object_list, self.output_object_list)
+        setups_functions.save_setup_to_file(self.setup_path_name, self.data_object_list, self.output_object_list)
         setups_functions.save_input_type(self.setup_path_name, self.setup_input_type)
         setups_functions.save_input_data(self.setup_path_name, self.setup_input_data)
 
     def save_setup_as(self, new_name):
-        print "setup -- name --- ", new_name
+        #print "setup -- name --- ", new_name
         setups_functions.new_setup(new_name)
         new_setup_path, creat_new =  setups_functions.get_setup_path(new_name)
-        setups_functions.save_setup_to_file(new_setup_path, self.data_object_list.filter_object_list, self.output_object_list)
+        setups_functions.save_setup_to_file(new_setup_path, self.data_object_list, self.output_object_list)
         setups_functions.save_input_type(new_setup_path, self.setup_input_type)
         setups_functions.save_input_data(new_setup_path, self.setup_input_data)
         self.load_setup(new_name)
+
+    def print_TEST_current_data_filter_outputs(self):
+        print "####### CURRENT SETUP DATA #######"
+        setups_functions.print_setup_contents(self.setup_name)
+        print ""
+        print "####### DATA OBJECTS #############"
+        self.data_object_list.temp_print_data_objects()
+        print ""
+        print "####### FILTER OBJECTS ###########"
+        self.data_object_list.filter_object_list.temp_print_filter_data()
+        print ""
+        print "####### OUTPUT OBJECTS ###########"
+        self.output_object_list.temp_print_output_data()
+        print ""
 
 
 

@@ -46,12 +46,17 @@ class Output_Object_List(object):
         return length
 
     def shelve_output_list_as_file(self, full_filename):
-        print "saving shelving output list - ", full_filename
+        #print "saving shelving output list - ", full_filename
         output_object_data_list = []
         for output_object in self.output_object_list:
             data = output_object.get_full_data()
-            print "shelving data - ", data
+            #print "shelving data - ", data
             output_object_data_list.append(data)
+        shelve_file = shelve.open(full_filename)
+        shelve_file['output_object_list'] = output_object_data_list
+        shelve_file.close()
+
+    def shelve_output_list_from_list(self, output_object_data_list, full_filename):
         shelve_file = shelve.open(full_filename)
         shelve_file['output_object_list'] = output_object_data_list
         shelve_file.close()
@@ -70,7 +75,6 @@ class Output_Object_List(object):
         name_split = name.split('-')
         return name_split[0]
 
-
     def get_all_current_names(self):
         current_names = []
         for object in self.output_object_list:
@@ -88,6 +92,19 @@ class Output_Object_List(object):
                 ok_new = True
             counter = counter + 1
         return new_name
+
+    def get_full_output_list(self):
+        full_output_list = []
+        for obj in self.output_object_list:
+            full_output_list.append(obj.get_full_data())
+        return full_output_list
+
+    def find_output_from_name(self, output_name):
+        found_output = False
+        for output in self.output_object_list:
+            if output.get_output_name() == output_name:
+                found_output = output
+        return found_output
 
     def find_output_from_name(self, output_name):
         found_output = False
@@ -110,11 +127,16 @@ class Output_Object_List(object):
             process.append(process_output)
         process_functions.set_process_data_to_file(new_process_file_path, process)
 
+    def apply_outputs(self, avaliable_variables):
+        for output in self.output_object_list:
+            output.apply_avaliable_variables(avaliable_variables)
+
 class Output_Object(object):
 
     def __init__(self, index, name):
         self.index = index
         self.variables = []
+        self.avaliable_variables = []
         self.name = name
 
     def set_index(self, index):
@@ -193,6 +215,9 @@ class Output_Object(object):
             status = "Pass"
         return notes, status
 
+    def apply_avaliable_variables(self, latest_avaliable_variables):
+        self.avaliable_variables = latest_avaliable_variables
+
 class Output_Make_Folders(Output_Object):
 
     def __init__(self, index, name):
@@ -221,7 +246,7 @@ class Output_Make_Folders(Output_Object):
 
     def add_specific_notes(self, notes, status, found_all):
         if found_all == False:
-            notes.append("Not all tree variavbles were created in list build")
+            notes.append("Not all tree variables were created in list build")
             status = "Pass"
         return notes, status
 

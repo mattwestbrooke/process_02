@@ -20,59 +20,78 @@ class filter_UI(QtGui.QWidget):
         super(filter_UI, self).__init__()
 
         self.setupUi()
-        self.connect(self.save_b, QtCore.SIGNAL("clicked()"), self.update_vars)
+        self.connect(self.save_b, QtCore.SIGNAL("clicked()"), self.update_filter)
         self.connect(self.hide_b, QtCore.SIGNAL("clicked()"), self.delete_filter)
-        self.connect(self.var1_cb_3, QtCore.SIGNAL("currentIndexChanged(const QString&)"), self.update_vars)
-        self.connect(self.var2_cb_5, QtCore.SIGNAL("currentIndexChanged(const QString&)"), self.update_vars)
-        self.connect(self.var3_cb_7, QtCore.SIGNAL("currentIndexChanged(const QString&)"), self.update_vars)
+        self.connect(self.var1_cb_3, QtCore.SIGNAL("currentIndexChanged(const QString&)"), self.update_filter)
+        self.connect(self.var2_cb_5, QtCore.SIGNAL("currentIndexChanged(const QString&)"), self.update_filter)
+        self.connect(self.var3_cb_7, QtCore.SIGNAL("currentIndexChanged(const QString&)"), self.update_filter)
         self.new_var_8.editingFinished.connect(self.handle_le_sig)
         self.var1_le_2.editingFinished.connect(self.handle_le_sig)
         self.var2_le_4.editingFinished.connect(self.handle_le_sig)
         self.var3_le_6.editingFinished.connect(self.handle_le_sig)
         self.save_b.setHidden(True)
+        self.width_default = 400
+        self.height_default = 185
+        self.variable_count = 9
 
     def handle_le_sig(self):
         if self.new_var_8.isModified() or self.var1_le_2.isModified() or self.var2_le_4.isModified() or self.var3_le_6.isModified():
-            self.update_vars()
+            self.update_filter()
 
 
-    def set_variables(self, filt_vars):
+    def set_variables(self, filter_data):
 
         self.var1_cb_3.blockSignals(True)
         self.var2_cb_5.blockSignals(True)
         self.var3_cb_7.blockSignals(True)
+        self.filter_index = filter_data[0]
+        self.filter_name = filter_data[1]
+        self.filter_activate = filter_data[2]
+        self.filter_variables = filter_data[3]
+        self.avaliable_variables = filter_data[4]
+        self.text_1, found1 = self.get_variable("text_1")
+        self.variable_1, found2 = self.get_variable("variable_1")
+        self.text_2, found3 = self.get_variable("text_2")
+        self.variable_2, found4 = self.get_variable("variable_2")
+        self.text_3, found5 = self.get_variable("text_3")
+        self.variable_3, found6 = self.get_variable("variable_3")
+        self.result_variable, found7 = self.get_variable("result_variable")
+
+        # self.var1_cb_3.blockSignals(True)
+        # self.var2_cb_5.blockSignals(True)
+        # self.var3_cb_7.blockSignals(True)
 
         # print "setting variables - ", filt_vars
         # print "in use container variables - ", vars
-        self.gfilt_vars = filt_vars[1]
+        # self.gfilt_vars = filter_data[1]
 
-        print "############### - gfilt CF - ", self.gfilt_vars
+        #print "############### - gfilt CF - ", self.gfilt_vars
         self.var1_cb_3.addItem('not_set')
-        self.var1_cb_3.addItems(filt_vars[1])
+        self.var1_cb_3.addItems(self.avaliable_variables)
         self.var2_cb_5.addItem('not_set')
-        self.var2_cb_5.addItems(filt_vars[1])
+        self.var2_cb_5.addItems(self.avaliable_variables)
         self.var3_cb_7.addItem('not_set')
-        self.var3_cb_7.addItems(filt_vars[1])
+        self.var3_cb_7.addItems(self.avaliable_variables)
 
-        index = self.var1_cb_3.findText(str(filt_vars[3]), QtCore.Qt.MatchFixedString)
+        index = self.var1_cb_3.findText(str(self.variable_1), QtCore.Qt.MatchFixedString)
         if index >= 0:
             self.var1_cb_3.setCurrentIndex(index)
-        index = self.var2_cb_5.findText(str(filt_vars[5]), QtCore.Qt.MatchFixedString)
+        index = self.var2_cb_5.findText(str(self.variable_2), QtCore.Qt.MatchFixedString)
         if index >= 0:
             self.var2_cb_5.setCurrentIndex(index)
-        index = self.var3_cb_7.findText(str(filt_vars[7]), QtCore.Qt.MatchFixedString)
+        index = self.var3_cb_7.findText(str(self.variable_3), QtCore.Qt.MatchFixedString)
         if index >= 0:
             self.var3_cb_7.setCurrentIndex(index)
 
-        self.var1_le_2.setText(filt_vars[2])
-        self.var2_le_4.setText(filt_vars[4])
-        self.var3_le_6.setText(filt_vars[6])
+        self.var1_le_2.setText(str(self.text_1))
+        self.var2_le_4.setText(str(self.text_2))
+        self.var3_le_6.setText(str(self.text_3))
 
         self.var1_cb_3.blockSignals(False)
         self.var2_cb_5.blockSignals(False)
         self.var3_cb_7.blockSignals(False)
 
-        self.new_var_8.setText(filt_vars[8])
+        self.new_var_8.setText(self.result_variable)
 
 
     def get_keys(self):
@@ -85,14 +104,35 @@ class filter_UI(QtGui.QWidget):
         #print "keys found - ", keys
         return keys
 
-    def update_vars(self):
-        update = [str(self.name_1.text()), self.gfilt_vars, str(self.var1_le_2.text()), str(self.var1_cb_3.currentText()), str(self.var2_le_4.text()), str(self.var2_cb_5.currentText()), str(self.var3_le_6.text()), str(self.var3_cb_7.currentText()), str(self.new_var_8.text())]
+    # def update_vars(self):
+    #     update = [str(self.name_1.text()), self.gfilt_vars, str(self.var1_le_2.text()), str(self.var1_cb_3.currentText()), str(self.var2_le_4.text()), str(self.var2_cb_5.currentText()), str(self.var3_le_6.text()), str(self.var3_cb_7.currentText()), str(self.new_var_8.text())]
+    #     self.update_filter_signal.emit(update)
+
+    def update_filter(self):
+        print self.var1_le_2.text()
+        print self.var2_le_4.text()
+        print self.var3_le_6.text()
+        print self.var1_cb_3.currentText()
+        print self.var2_cb_5.currentText()
+        print self.var3_cb_7.currentText()
+        print self.new_var_8.text()
+
+        update = [str(self.filter_index), self.filter_name, self.filter_activate ,[["text_1",str(self.var1_le_2.text())], ["text_2",str(self.var2_le_4.text())], ["text_3",str(self.var3_le_6.text())], ["variable_1",str(self.var1_cb_3.currentText())], ["variable_2",str(self.var2_cb_5.currentText())], ["variable_3",str(self.var3_cb_7.currentText())], ["result_variable",str(self.new_var_8.text())]],[]]
         self.update_filter_signal.emit(update)
 
     def delete_filter(self):
         #print "in delete filter (in filter)"
-        to_delete = self.name_1.text()
+        to_delete = self.filter_name
         self.delete_filter_signal.emit(str(to_delete))
+
+    def get_variable(self, attribute):
+        found = False
+        result = ""
+        for filter_variable_tupple in self.filter_variables:
+            if filter_variable_tupple[0] == attribute:
+                result = filter_variable_tupple[1]
+                found = True
+        return result, found
 
 
 

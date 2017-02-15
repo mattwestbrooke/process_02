@@ -150,7 +150,7 @@ class Process_Output_Object(object):
         completed = True
         for event in self.event_list:
             if event.get_status() == 'Ready':
-                print "completed -- ", completed
+                #print "completed -- ", completed
                 completed = False
         if completed == False:
             self.set_global_status('Ready')

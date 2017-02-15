@@ -51,7 +51,9 @@ class filter_UI(QtGui.QWidget):
 
 
         keys = tree_functions.get_all_current_keys()
+        self.key_2.addItem("not_set")
         self.key_2.addItems(keys)
+        self.variavle_3.addItem("not_set")
         self.variavle_3.addItems(self.avaliable_variables)
 
         index = self.key_2.findText(str(self.key_filter), QtCore.Qt.MatchFixedString)
@@ -80,7 +82,7 @@ class filter_UI(QtGui.QWidget):
 
     def delete_filter(self):
         #print "in delete filter (in filter)"
-        to_delete = self.name_1.text()
+        to_delete = self.filter_name
         self.delete_filter_signal.emit(str(to_delete))
 
     def get_variable(self, attribute):

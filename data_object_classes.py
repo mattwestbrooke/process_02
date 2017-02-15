@@ -41,18 +41,18 @@ class Data_Object_List(object):
         return length
 
     def shelve_data_object_list_as_file(self, full_filename):
-        print "saving - shelving data object list - ", full_filename
+        #print "saving - shelving data object list - ", full_filename
         data_object_data_list = []
         for data_object in self.data_object_list:
             data = data_object.get_full_data()
-            print "shelving data - ", data
+            #print "shelving data - ", data
             data_object_data_list.append(data)
         shelve_file = shelve.open(full_filename)
         shelve_file['data_object_list'] = data_object_data_list
         shelve_file.close()
 
     def load_data_list_from_file(self, full_filename):
-        print "loading shelved data list - ", full_filename
+        #print "loading shelved data list - ", full_filename
         self.data_object_list = []
         shelve_file = shelve.open(full_filename)
         data_object_data_list = shelve_file['data_object_list']

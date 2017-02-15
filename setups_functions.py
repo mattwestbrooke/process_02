@@ -20,13 +20,19 @@ def new_setup(new_name):
         shelve_file['setup_input_data'] = ["", "", "", ""]
         shelve_file.close()
         made_new_file = True
-
-        shelve_file = shelve.open(new_setup_path)
-        print "1 - ", shelve_file['output_object_list']
-        print "2 - ", shelve_file['filter_object_list']
-        print "3 - ", shelve_file['setup_input_type']
-        print "4 - ", shelve_file['setup_input_data']
     return made_new_file
+
+def print_setup_contents(setup_name):
+    setup_path, can_create = get_setup_path(setup_name)
+    shelve_file = shelve.open(setup_path)
+    print ""
+    print "setup name -- ", setup_name
+    print "1 - ", shelve_file['output_object_list']
+    print "2 - ", shelve_file['filter_object_list']
+    print "3 - ", shelve_file['setup_input_type']
+    print "4 - ", shelve_file['setup_input_data']
+    print ""
+    shelve_file.close()
 
 def get_all_setups():
     setups = []
@@ -75,13 +81,13 @@ def get_setup_path(name):
         can_create = False
     return setup_path, can_create
 
-def save_setup_to_file(save_setup_path, filter_object_list, output_object_list):
-    filter_object_list.shelve_filter_list_as_file(save_setup_path)
+def save_setup_to_file(save_setup_path, data_object_list, output_object_list):
+    data_object_list.filter_object_list.shelve_filter_list_as_file(save_setup_path)
     output_object_list.shelve_output_list_as_file(save_setup_path)
 
-def load_file_to_setup(load_setup_path, filter_object_list, output_object_list):
-    filter_object_list.shelve_filter_list_as_file(load_setup_path)
-    output_object_list.shelve_output_list_as_file(load_setup_path)
+def load_file_to_setup(load_setup_path, data_object_list, output_object_list):
+    data_object_list.filter_object_list.load_filter_list_from_file(load_setup_path)
+    output_object_list.load_output_list_from_file(load_setup_path)
 
 
 
